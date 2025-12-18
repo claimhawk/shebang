@@ -1,0 +1,146 @@
+# Guardrails Configuration
+# Centralized patterns for all guardrail scripts
+
+# Protected file patterns (regex)
+# These patterns are matched against file paths
+protected_paths:
+  # Block: Operations on these files are denied
+  block:
+    - '\.env($|\.).*'              # .env, .env.local, .env.production
+    - '^\.git/'                    # Git internals
+    - 'secrets?\.ya?ml$'           # secrets.yaml, secret.yml
+    - 'credentials?\.json$'        # credentials.json
+    - '\.pem$'                     # Private keys
+    - '\.key$'                     # SSH/TLS keys
+    - 'id_rsa'                     # SSH private key
+    - 'id_ed25519'                 # SSH private key (ed25519)
+    - 'id_ecdsa'                   # SSH private key (ecdsa)
+    - '\.p12$'                     # PKCS#12 certificates
+    - '\.pfx$'                     # PKCS#12 certificates
+    - 'private.*key'               # Generic private key files
+    - '\.htpasswd$'                # Apache password files
+    - 'shadow$'                    # Unix shadow passwords
+
+  # Warn: Operations allowed but flagged
+  warn:
+    - 'config/.*\.ya?ml$'          # Config files
+    - '\.github/workflows/'        # CI workflows
+    - 'Dockerfile'                 # Container definitions
+    - 'docker-compose'             # Docker compose files
+    - 'pyproject\.toml$'           # Python project config
+    - 'package\.json$'             # Node.js project config
+
+# Secret patterns (regex -> description)
+# These patterns are matched against file content
+secrets:
+  # GitHub tokens
+  - pattern: 'ghp_[a-zA-Z0-9]{36}'
+    name: GitHub Personal Access Token
+  - pattern: 'github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}'
+    name: GitHub Fine-grained PAT
+  - pattern: 'gho_[a-zA-Z0-9]{36}'
+    name: GitHub OAuth Token
+  - pattern: 'ghs_[a-zA-Z0-9]{36}'
+    name: GitHub Server-to-Server Token
+  - pattern: 'ghr_[a-zA-Z0-9]{36}'
+    name: GitHub Refresh Token
+
+  # AI/ML API keys
+  - pattern: 'sk-[a-zA-Z0-9]{48}'
+    name: OpenAI API Key
+  - pattern: 'sk-proj-[a-zA-Z0-9\-_]{80,}'
+    name: OpenAI Project Key
+  - pattern: 'sk-ant-[a-zA-Z0-9\-]{20,}'
+    name: Anthropic API Key
+  - pattern: 'hf_[a-zA-Z0-9]{34}'
+    name: HuggingFace Token
+  - pattern: 'modal_[a-zA-Z0-9]{32}'
+    name: Modal Token
+
+  # Cloud providers
+  - pattern: 'AKIA[0-9A-Z]{16}'
+    name: AWS Access Key ID
+  - pattern: 'ABIA[0-9A-Z]{16}'
+    name: AWS STS Token
+  - pattern: 'ACCA[0-9A-Z]{16}'
+    name: AWS CloudFront Key
+  - pattern: 'AIza[0-9A-Za-z\-_]{35}'
+    name: Google API Key
+  - pattern: 'ya29\.[0-9A-Za-z\-_]+'
+    name: Google OAuth Token
+
+  # Private keys
+  - pattern: '-----BEGIN RSA PRIVATE KEY-----'
+    name: RSA Private Key
+  - pattern: '-----BEGIN PRIVATE KEY-----'
+    name: Private Key (PKCS#8)
+  - pattern: '-----BEGIN EC PRIVATE KEY-----'
+    name: EC Private Key
+  - pattern: '-----BEGIN OPENSSH PRIVATE KEY-----'
+    name: OpenSSH Private Key
+  - pattern: '-----BEGIN DSA PRIVATE KEY-----'
+    name: DSA Private Key
+  - pattern: '-----BEGIN PGP PRIVATE KEY BLOCK-----'
+    name: PGP Private Key
+
+  # Database connection strings
+  - pattern: 'mongodb(\+srv)?://[^:]+:[^@]+@'
+    name: MongoDB Connection String with Password
+  - pattern: 'postgres(ql)?://[^:]+:[^@]+@'
+    name: PostgreSQL Connection String with Password
+  - pattern: 'mysql://[^:]+:[^@]+@'
+    name: MySQL Connection String with Password
+  - pattern: 'redis://[^:]+:[^@]+@'
+    name: Redis Connection String with Password
+
+  # Other services
+  - pattern: 'xox[baprs]-[0-9A-Za-z\-]+'
+    name: Slack Token
+  - pattern: 'hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+'
+    name: Slack Webhook URL
+  - pattern: 'sk_live_[0-9a-zA-Z]{24}'
+    name: Stripe Live Key
+  - pattern: 'rk_live_[0-9a-zA-Z]{24}'
+    name: Stripe Restricted Key
+  - pattern: 'sq0atp-[0-9A-Za-z\-_]{22}'
+    name: Square Access Token
+  - pattern: 'SG\.[a-zA-Z0-9\-_]{22}\.[a-zA-Z0-9\-_]{43}'
+    name: SendGrid API Key
+  - pattern: 'key-[0-9a-zA-Z]{32}'
+    name: Mailgun API Key
+
+# Dangerous shell commands (regex)
+commands:
+  # Block: These commands are denied outright
+  block:
+    - 'rm\s+-rf\s+[/~]'            # rm -rf / or ~
+    - 'rm\s+-rf\s+\*'              # rm -rf *
+    - 'rm\s+.*\*.*\*'              # rm with multiple wildcards
+    - 'git\s+push.*--force'        # Force push (data loss)
+    - 'git\s+push.*-f\s'           # Force push shorthand
+    - 'chmod\s+777'                # World-writable permissions
+    - 'chmod\s+-R\s+777'           # Recursive world-writable
+    - 'curl.*\|\s*(ba)?sh'         # Piping curl to shell
+    - 'wget.*\|\s*(ba)?sh'         # Piping wget to shell
+    - '>\s*/dev/sd[a-z]'           # Writing to raw disk
+    - '>\s*/dev/nvme'              # Writing to NVMe disk
+    - 'mkfs\.'                     # Formatting filesystems
+    - 'dd\s+if=.*of=/dev'          # Direct disk writes
+    - 'shred\s+'                   # Secure file deletion
+    - ':(){ :|:& };:'              # Fork bomb
+    - 'mv\s+/\s'                   # Moving root directory
+    - 'mv\s+~\s'                   # Moving home directory
+
+  # Warn: These commands are allowed but flagged
+  warn:
+    - 'git\s+commit.*--amend'      # Amending commits
+    - 'git\s+rebase'               # Rebasing (can lose commits)
+    - 'git\s+reset'                # Any git reset
+    - 'git\s+clean\s+-fd'          # Removing untracked files
+    - 'npm\s+publish'              # Publishing packages
+    - 'pip\s+install(?!\s+-e)'     # Non-editable pip install
+    - 'modal\s+deploy'             # Modal deployments
+    - 'rm\s+-r'                    # Recursive delete (not -rf)
+    - 'DROP\s+TABLE'               # SQL table deletion
+    - 'DROP\s+DATABASE'            # SQL database deletion
+    - 'TRUNCATE\s+TABLE'           # SQL table truncation
