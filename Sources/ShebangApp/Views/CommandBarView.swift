@@ -259,7 +259,7 @@ struct CommandBarView: View {
     // MARK: - Tab Completion
 
     private func triggerCompletion() {
-        let input = commandText.trimmingCharacters(in: .whitespaces)
+        let input = commandText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Slash command completion
         if input.hasPrefix("/") {
@@ -339,7 +339,7 @@ struct CommandBarView: View {
     // MARK: - Actions
 
     private func executeCommand() {
-        let trimmed = commandText.trimmingCharacters(in: .whitespaces)
+        let trimmed = commandText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
         // Add to history
@@ -504,7 +504,7 @@ enum CommandRouter {
 
     /// Detect if input looks like a shell command
     private static func isShellCommand(_ input: String) -> Bool {
-        let trimmed = input.trimmingCharacters(in: .whitespaces)
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Empty or very short - not a command
         guard trimmed.count > 0 else { return false }
