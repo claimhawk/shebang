@@ -190,6 +190,17 @@ def generate_productivity_comparison() -> str:
     lines.append(f"{'TOTAL':<20} | {total_2020:>11}h | {total_shebang:>10.1f}h | {overall_speedup:.0f}x")
     lines.append("```")
 
+    lines.append("")
+    lines.append("### The Bottom Line")
+    lines.append("")
+    lines.append("```")
+    lines.append("╔═══════════════════════════════════════════════════════════╗")
+    lines.append("║                                                           ║")
+    lines.append("║   1 HOUR with Shebang! = 1 DAY for a 2020 developer      ║")
+    lines.append("║                                                           ║")
+    lines.append("╚═══════════════════════════════════════════════════════════╝")
+    lines.append("```")
+
     return "\n".join(lines)
 
 

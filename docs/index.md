@@ -1,5 +1,7 @@
 # Shebang! — Automated Development Environment
 
+**1 hour with Shebang! = 1 day for a 2020 developer.**
+
 **60 years of programming knowledge, available to everyone.**
 
 **PUBLIC DOMAIN. No strings. No corporate BS. No gatekeeping.**

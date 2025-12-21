@@ -30,12 +30,15 @@
 ## Tagline
 
 **Primary:**
-> 60 years of programming knowledge, available to everyone.
+> 1 hour with Shebang! = 1 day for a 2020 developer.
 
 **Secondary:**
-> The interface gets out of your way. The work remains.
+> 60 years of programming knowledge, available to everyone.
 
 **Tertiary:**
+> The interface gets out of your way. The work remains.
+
+**Supporting:**
 > Hard-won wisdom, available instantly.
 
 ---
