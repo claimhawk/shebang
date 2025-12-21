@@ -100,3 +100,7 @@ Package.resolved
 
 # Documentation build output
 site/
+
+# Git worktrees (used by scripts like reconcile-history.sh)
+scripts/.worktrees/
+.worktrees/
