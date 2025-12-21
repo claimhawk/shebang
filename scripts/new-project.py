@@ -25,6 +25,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent
 SHEBANG_ROOT = SCRIPT_DIR.parent
 TEMPLATES_DIR = SHEBANG_ROOT / 'templates' / 'project' / '.shebang'
+CLAUDE_DIR = SHEBANG_ROOT / '.claude'
 
 
 def slugify(name: str) -> str:
@@ -114,6 +115,18 @@ tags: {json.dumps(config['tags'])}
                 'calendarHours': 0
             }
             metrics_path.write_text(json.dumps(metrics, indent=2))
+
+        # Copy .claude folder with skills, commands, and hooks
+        if CLAUDE_DIR.exists():
+            project_claude_dir = project_dir / '.claude'
+            shutil.copytree(CLAUDE_DIR, project_claude_dir)
+            # Remove any local-only files that shouldn't be copied
+            for local_file in project_claude_dir.glob('*.local.*'):
+                local_file.unlink()
+            # Remove implementation folder (project-specific)
+            impl_dir = project_claude_dir / 'implementation'
+            if impl_dir.exists():
+                shutil.rmtree(impl_dir)
 
         # Create a README.md stub
         readme_content = f"""# {name}
@@ -205,10 +218,10 @@ def main():
             print()
             print("Created:")
             print(f"  {project_path}/")
-            print(f"  {project_path}/.shebang/kanban.json")
-            print(f"  {project_path}/.shebang/metrics.json")
-            print(f"  {project_path}/.shebang/config.yaml")
+            print(f"  {project_path}/.shebang/     (kanban, metrics, config)")
+            print(f"  {project_path}/.claude/      (skills, commands, hooks)")
             print(f"  {project_path}/README.md")
+            print(f"  {project_path}/.gitignore")
             print(f"  {project_path}/.gitignore")
             print()
             print("Next steps:")
