@@ -33,7 +33,12 @@ struct SessionPanelView: View {
             }
         }
         .frame(maxHeight: .infinity)
-        .background(Color.Shebang.bgSecondary)
+        .background(
+            ZStack {
+                Color.Shebang.bgSecondary
+                Color.Shebang.accentPrimary.opacity(0.03)
+            }
+        )
     }
 
     // MARK: - Header

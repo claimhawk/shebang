@@ -42,7 +42,7 @@ struct TerminalCanvasView: View {
                 }
             }
         }
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Color.Shebang.bgPrimary)
     }
 
     // MARK: - Output Handling
@@ -74,21 +74,18 @@ struct TerminalHeaderView: View {
 
             // Session name pill
             Text(session.name)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.Shebang.textMuted)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(
-                    Capsule()
-                        .fill(Color.primary.opacity(0.08))
-                )
+                .background(Color.Shebang.bgTertiary)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.8))
+        .background(Color.Shebang.bgSecondary)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color(nsColor: .separatorColor).opacity(0.5))
+                .fill(Color.Shebang.bgElevated)
                 .frame(height: 1)
         }
     }
@@ -143,7 +140,7 @@ struct TerminalBlocksView: View {
             }
             .padding()
         }
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Color.Shebang.bgPrimary)
     }
 }
 
@@ -262,7 +259,7 @@ struct EmptySessionView: View {
             .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Color.Shebang.bgPrimary)
     }
 }
 

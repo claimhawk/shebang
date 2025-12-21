@@ -229,14 +229,14 @@ class ReadOnlyTerminalContainer: NSView {
     }
 }
 
-// MARK: - Default Terminal Theme
+// MARK: - Terminal Theme (matches Shebang theme.yaml)
 
 struct DefaultTheme {
     static let shared = DefaultTheme()
 
-    // Solarized Dark-inspired colors
-    let background = NSColor(red: 0.00, green: 0.07, blue: 0.12, alpha: 1.0)
-    let foreground = NSColor(red: 0.51, green: 0.58, blue: 0.59, alpha: 1.0)
+    // Shebang dark purple theme - matches theme.yaml bgPrimary
+    let background = NSColor(red: 0.039, green: 0.039, blue: 0.078, alpha: 1.0)  // #0a0a14
+    let foreground = NSColor(red: 0.910, green: 0.910, blue: 0.941, alpha: 1.0)  // #e8e8f0
 }
 
 // MARK: - Preview
