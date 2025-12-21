@@ -34,7 +34,10 @@ fi
 echo "Copying documentation files..."
 cp "$PROJECT_ROOT/README.md" "$DOCS_DIR/index.md" 2>/dev/null || true
 cp "$PROJECT_ROOT/PHILOSOPHY.md" "$DOCS_DIR/PHILOSOPHY.md" 2>/dev/null || true
-cp "$PROJECT_ROOT/VOICE.md" "$DOCS_DIR/VOICE.md" 2>/dev/null || true
+cp "$PROJECT_ROOT/BRAND.md" "$DOCS_DIR/BRAND.md" 2>/dev/null || true
+cp "$PROJECT_ROOT/METRICS.md" "$DOCS_DIR/METRICS.md" 2>/dev/null || true
+cp "$PROJECT_ROOT/BUILD_LOG.md" "$DOCS_DIR/BUILD_LOG.md" 2>/dev/null || true
+cp "$PROJECT_ROOT/agent/VOICE.md" "$DOCS_DIR/VOICE.md" 2>/dev/null || true
 
 # Generate Swift API docs from docstrings
 echo "Extracting Swift documentation..."

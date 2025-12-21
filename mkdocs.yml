@@ -33,7 +33,10 @@ nav:
     - Session Persistence: DESIGN_SESSION_PERSISTENCE.md
   - Development:
     - Philosophy: PHILOSOPHY.md
-    - Voice Guide: VOICE.md
+    - Brand: BRAND.md
+  - Metrics:
+    - Productivity: METRICS.md
+    - Build Log: BUILD_LOG.md
   - API Reference:
     - Swift API: api/swift.md
 

@@ -10,18 +10,20 @@ This is the primary instruction file for AI agents (Claude Code, Gemini CLI, etc
 
 | What | Where |
 |------|-------|
-| **What to do** | `.claude/context/BEST_PRACTICES.md` |
-| **What NOT to do** | `.claude/context/ANTI_PATTERNS.md` |
-| **Python standards** | `.claude/context/CODE_QUALITY.md` |
+| **What to do** | `agent/BEST_PRACTICES.md` |
+| **What NOT to do** | `agent/ANTI_PATTERNS.md` |
+| **Python standards** | `agent/CODE_QUALITY.md` |
+| **Agent workflow** | `agent/system.md` |
+| **Project templates** | `agent/templates/` |
+| **Communication style** | `agent/VOICE.md` |
 | **Why we build this way** | `PHILOSOPHY.md` |
-| **Communication style** | `VOICE.md` |
 | **Hook configuration** | `.claude/settings.json` |
 
 ---
 
 ## The Contract
 
-1. **Write correct code the first time** — Use the wisdom in `.claude/context/`
+1. **Write correct code the first time** — Use the wisdom in `agent/`
 2. **If you mess up, hooks will block you** — Read the error, fix the issue
 3. **Learn from corrections** — Don't repeat the same mistake
 
@@ -40,10 +42,10 @@ The hooks enforce:
 Read `PHILOSOPHY.md`. This isn't just documentation — it's the design contract. Features that don't align with the philosophy won't be accepted.
 
 ### 2. Know the Anti-Patterns
-Read `.claude/context/ANTI_PATTERNS.md`. 65 years of LISP wisdom distilled. These patterns will get blocked by hooks anyway, so learn them upfront.
+Read `agent/ANTI_PATTERNS.md`. 65 years of LISP wisdom distilled. These patterns will get blocked by hooks anyway, so learn them upfront.
 
 ### 3. Follow the Standards
-Read `.claude/context/CODE_QUALITY.md` for language-specific requirements:
+Read `agent/CODE_QUALITY.md` for language-specific requirements:
 - Python: Type hints, ruff, mypy, max complexity 10
 - TypeScript: Strict mode, no `any`, ESLint + Prettier
 - Swift: SwiftLint, proper optionals
@@ -137,18 +139,25 @@ Sources/ShebangApp/           # macOS app (Swift/SwiftUI)
 ├── Views/                    # UI components
 └── Services/                 # Business logic
 
+agent/                        # Agent knowledge base
+├── ANTI_PATTERNS.md          # What NOT to do (65 years of wisdom)
+├── BEST_PRACTICES.md         # What to do
+├── CODE_QUALITY.md           # Language-specific standards
+├── VOICE.md                  # Communication style
+├── system.md                 # Agent workflow template
+├── templates/                # Project scaffolds
+└── examples/                 # Working example projects
+
 scripts/guardrails/           # Hook validators
 ├── config.yaml               # All patterns centralized
 ├── validate_*.py             # PreToolUse hooks
 └── post_*.py                 # PostToolUse hooks
 
-.claude/                      # Agent configuration
+.claude/                      # Claude configuration
 ├── settings.json             # Hook config
-├── context/                  # Agent reference docs
 └── hookify.*.local.md        # Content-based rules
 
 docs/                         # Human documentation
-templates/                    # Project templates
 ```
 
 ---
