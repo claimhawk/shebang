@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-**Claude Code Guardrails** — Production-grade guardrails for Claude Code projects. This toolkit provides automated enforcement of code quality, secret detection, and best practices through Claude Code's hook system.
+**Shebang!** — Automated Development Environment. Production-grade guardrails for Claude Code projects with automated enforcement of code quality, secret detection, and best practices through Claude Code's hook system.
 
 ## Quick Start
 

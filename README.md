@@ -1,14 +1,17 @@
 <div align="center">
 
-# Claude Code Guardrails
+# Shebang!
 
-### Development intelligence — commodified and distilled.
+### Automated Development Environment
 
+[![Alpha](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/claimhawk/shebang)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**30 years of software engineering wisdom, automatically enforced. Vibe code freely — the agent handles the rest.**
+> ⚠️ **Alpha Software** — This project is under active development. APIs and features may change.
+
+**Automated development with built-in guardrails. Vibe code freely — the agent handles the rest.**
 
 [The Idea](#-the-idea) •
 [Heritage](#-heritage) •
@@ -71,10 +74,10 @@ These documents aren't just rules — they're an education. Each pattern links b
 
 ```bash
 # Clone it
-git clone https://github.com/your-org/claude-code-guardrails.git
+git clone https://github.com/claimhawk/shebang.git
 
 # Copy to your project
-cp -r claude-code-guardrails/* /path/to/your/project/
+cp -r shebang/* /path/to/your/project/
 
 # Install deps
 pip install pyyaml ruff mypy radon
