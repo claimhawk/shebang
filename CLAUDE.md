@@ -1,49 +1,23 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
----
-
-## ⚡ FIRST: Read system.md
-
-**Before doing anything else**, read and execute the startup actions in [`system.md`](./system.md).
-
-That file contains:
-- **REQUIRED** background processes you must start immediately
-- Git workflow rules (fetch & rebase, never pull)
-- Inter-agent communication protocol
-- Your role and identity as an autonomous agent
-
-**Do not skip this step.**
+This file provides guidance to Claude Code when working with code in this repository.
 
 ---
 
 ## Project Overview
 
-Claude Autonomous Code Starter Kit - a comprehensive starter template for building projects with Claude Code that includes guardrails, code quality enforcement, and autonomous agent workflow protocols.
+**Claude Code Guardrails** — Production-grade guardrails for Claude Code projects. This toolkit provides automated enforcement of code quality, secret detection, and best practices through Claude Code's hook system.
 
-## Commands
-
-### Setup
+## Quick Start
 
 ```bash
-# Install Python dependencies
-pip install pyyaml ruff mypy radon pytest
+# Install dependencies
+pip install pyyaml ruff mypy radon
 
-# Install TypeScript dependencies (for TS projects)
-npm install
-```
-
-### Quality Checks
-
-```bash
-# Run pre-commit checks on staged files
+# Run quality checks
 ./scripts/pre-commit.sh
 
-# Run checks on all tracked files
-./scripts/pre-commit.sh --all
-
-# Security sweep for secrets
+# Security sweep
 ./scripts/security-sweep.sh
 ```
 
@@ -51,58 +25,115 @@ npm install
 
 ```
 scripts/guardrails/     # Hook validators (PreToolUse/PostToolUse)
-templates/              # Project templates (Python, TypeScript)
-examples/               # Working example projects
-.claude/                # Claude workflow directories
+├── config.yaml         # All patterns centralized here
+├── utils.py            # Shared utilities
+├── validate_edit.py    # Block protected file paths
+├── validate_secrets.py # Detect secrets in content
+├── validate_command.py # Block dangerous shell commands
+├── validate_quality.py # Detect code anti-patterns
+└── post_write.py       # Auto-format and add copyright
+
+templates/              # Project templates
+├── python/             # Python project setup
+├── typescript/         # TypeScript project setup
+├── CLAUDE.md           # CLAUDE.md template
+└── system.md           # Agent workflow template
+
+.claude/                # Claude configuration
+├── settings.json       # Hook configuration
+└── hookify.*.local.md  # Content-based blocking rules
 ```
 
-## Subagent Execution Model (REQUIRED)
+## Guardrails System
 
-All AI assistants **must decompose complex tasks into explicit sub-tasks** and assign each sub-task to an isolated **subagent**. This is mandatory to:
+The guardrails use **three layers of defense**:
 
-- Prevent uncontrolled context growth
-- Ensure deterministic, auditable reasoning
-- Preserve repository-wide clarity and focus
-- Enforce separation of concerns
+### Layer 1: PreToolUse Hooks (Preventive)
 
-### Subagent Requirements
+| Hook | Purpose |
+|------|---------|
+| `validate_edit.py` | Block writes to `.env`, `.git/`, credentials, keys |
+| `validate_secrets.py` | Detect 40+ secret patterns (API keys, tokens, connection strings) |
+| `validate_command.py` | Block dangerous commands (`rm -rf /`, force push, `chmod 777`) |
+| `validate_quality.py` | Catch anti-patterns (silent exceptions, `any` types, junk drawers) |
 
-Every non-trivial request (multi-step, multi-file, or multi-decision) must:
+### Layer 2: PostToolUse Hooks (Automatic Maintenance)
 
-1. **Produce a task plan** - Break the task into atomic sub-tasks with clear contracts
-2. **Run subagents independently** - Subagents don't share context except explicit inputs
-3. **Return a composed final output** - Orchestrator integrates subagent outputs
+| Hook | Purpose |
+|------|---------|
+| `post_write.py` | Auto-format with ruff/prettier, add copyright headers |
 
-## Three-Step Implementation Protocol (MANDATORY)
+### Layer 3: Hookify Rules (Content-Based Blocking)
 
-All coding tasks must follow a strict three-stage workflow:
+| Rule | Purpose |
+|------|---------|
+| `hookify.secrets-detection.local.md` | Block API keys in code |
+| `hookify.silent-exceptions.local.md` | Block `except: pass` patterns |
+| `hookify.any-type.local.md` | Block TypeScript `any` type |
+| `hookify.junk-drawers.local.md` | Block `utils/`, `helpers/` directories |
 
-### 1. Research Phase → `./.claude/research/<file>`
+## Code Quality Standards
 
-- All initial thinking, exploration, reasoning
-- No code allowed
-- Output must be structured and comprehensive
+### Python Requirements
 
-### 2. Planning Phase → `./.claude/plans/<file>`
-
-- Implementation plan only
-- No code allowed
-- Must list steps, modules, functions, edge cases
-
-### 3. Implementation Progress Log → `./.claude/implementation/progress.md`
-
-- Every commit-sized action must be logged
-- Summaries of what was done, blockers, decisions
-
-**Coding may only begin after these three steps are complete.**
-
-## Code Quality
-
-- Python 3.12+, four-space indentation, PEP 8
-- All code must pass ruff, mypy checks
+- Python 3.12+
+- Four-space indentation, PEP 8
+- All code must pass `ruff check`, `ruff format`, and `mypy`
 - Maximum cyclomatic complexity: 10
+- Maximum function length: 50-60 lines
 - All functions require type hints
+- Copyright headers required
+
+### TypeScript Requirements
+
+- TypeScript strict mode
+- No `any` types
+- ESLint and Prettier passing
+- Maximum nesting: 3 levels
+- JSX nesting: 4 levels max
+
+## Development Workflow
+
+### Three-Phase Protocol (Recommended)
+
+1. **Research Phase** → `.claude/research/<task>.md`
+   - Gather context, analyze requirements
+   - No code in this phase
+
+2. **Planning Phase** → `.claude/plans/<task>.md`
+   - Define implementation steps
+   - No code in this phase
+
+3. **Implementation** → `.claude/implementation/progress.md`
+   - Log each action as you work
+   - Coding happens here
+
+## Commands
+
+```bash
+# Python quality checks (staged files)
+./scripts/pre-commit.sh
+
+# Python quality checks (all files)
+./scripts/pre-commit.sh --all
+
+# TypeScript quality checks
+./scripts/pre-commit-ts.sh
+
+# Security sweep for secrets
+./scripts/security-sweep.sh
+```
+
+## Configuration
+
+All patterns are centralized in `scripts/guardrails/config.yaml`:
+
+- `protected_paths` — Files that cannot be modified
+- `secrets` — Patterns for API keys, tokens, credentials
+- `commands` — Dangerous shell commands to block
+- `anti_patterns` — Code quality anti-patterns by language
+- `junk_drawers` — Forbidden directory names
 
 ## Git Commits
 
-**DO NOT CO-AUTHOR COMMITS** - only use the GitHub user's name when committing. Do not add co-author trailers or attribute commits to AI assistants.
+**DO NOT CO-AUTHOR COMMITS** — Only use the developer's name when committing. Do not add co-author trailers or attribute commits to AI assistants.

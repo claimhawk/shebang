@@ -1,6 +1,6 @@
 # Agent System Protocol
 
-> **EXECUTE STARTUP ACTIONS IMMEDIATELY** - Do not read further until you complete Section 1.
+A structured workflow protocol for autonomous AI coding agents.
 
 ---
 
@@ -8,130 +8,59 @@
 
 | # | Section | Priority |
 |---|---------|----------|
-| 1 | [Startup Actions](#1-startup-actions) | 🔴 CRITICAL - Do first |
-| 2 | [Message Watcher](#2-message-watcher) | 🔴 CRITICAL - Must be running |
-| 3 | [Git Workflow](#3-git-workflow) | 🟠 HIGH - Follow always |
-| 4 | [Inter-Agent Communication](#4-inter-agent-communication) | 🟠 HIGH - How to talk to other agents |
-| 5 | [Development Workflow](#5-development-workflow) | 🟡 MEDIUM - Your work process |
-| 6 | [Context Engineering](#6-context-engineering) | 🟡 MEDIUM - Keep context clean |
-| 7 | [Role & Identity](#7-role--identity) | 🟢 INFO - Who you are |
+| 1 | [Git Workflow](#1-git-workflow) | 🔴 CRITICAL |
+| 2 | [Development Workflow](#2-development-workflow) | 🟠 HIGH |
+| 3 | [Inter-Agent Communication](#3-inter-agent-communication) | 🟠 HIGH |
+| 4 | [Context Engineering](#4-context-engineering) | 🟡 MEDIUM |
+| 5 | [Code Quality](#5-code-quality) | 🟡 MEDIUM |
 
 ---
 
-## 1. Startup Actions
+## 1. Git Workflow
 
-**🔴 CRITICAL - Execute these NOW before reading further.**
+**🔴 CRITICAL — Follow these rules for all git operations.**
 
-### 1.1 Start the Message Watcher
+### 1.1 Branch Strategy
 
-Launch this background subagent **immediately**:
+- **Never commit directly to `main`** — Use feature branches
+- Use descriptive branch names: `{feature-type}/{description}`
+- Examples: `feature/add-auth`, `fix/login-validation`, `refactor/api-client`
 
-```
-Task tool:
-  subagent_type: "general-purpose"
-  run_in_background: true
-  prompt: |
-    Monitor .claude/communication/ directory for new message files.
-    When a new file appears (not ending in .processed):
-    1. Read the message file
-    2. Understand the request
-    3. Execute the work following the standard workflow (research → plan → implement)
-    4. Rename the file to {filename}.processed
-    5. If response requested, write to the sender's .claude/communication/ directory
-    Poll every 30 seconds. Run indefinitely.
-```
+### 1.2 The Golden Rule: Fetch & Rebase
 
-**This is not optional.** See [Section 2](#2-message-watcher) for full details.
-
-### 1.2 Sync Git
+**Prefer `git rebase` over `git merge`** for a clean linear history.
 
 ```bash
+# Update local main without switching branches
 git fetch origin main:main
+
+# Rebase your branch onto updated main
+git rebase main
 ```
 
-### 1.3 Verify Branch
-
-Confirm you are NOT on `main`. If you are, create a feature branch:
-
-```bash
-git checkout -b {your-name}-{feature-description} main
-```
-
----
-
-## 2. Message Watcher
-
-**🔴 CRITICAL - This process MUST be running for your entire session.**
-
-> **STOP.** Did you start the message watcher in Section 1.1? If not, go back and do it NOW.
-
-### 2.1 Purpose
-
-Other agents in sibling projects communicate with you by writing files to your `.claude/communication/` directory. Without the watcher running, you will miss their requests and break multi-agent collaboration.
-
-### 2.2 Message Processing Protocol
-
-When the watcher detects a new file (not ending in `.processed`):
-
-1. **Read** the message file completely
-2. **Understand** what the requesting agent needs
-3. **Execute** the work using your standard workflow (research → plan → implement)
-4. **Mark processed** by renaming to `{original-name}.processed`
-5. **Respond** if requested - write to the sender's `.claude/communication/` directory
-
-### 2.3 Failure Consequences
-
-If you do not run the message watcher:
-- Multi-agent collaboration breaks
-- Other agents' work is blocked waiting for you
-- The system does not function as designed
-
----
-
-## 3. Git Workflow
-
-**🟠 HIGH - Follow these rules for all git operations.**
-
-### 3.1 Branch Ownership
-
-- **`main` is owned by Mike** - never commit directly to main
-- Use feature branches with your name: `{developer}-{feature-description}`
-- Examples: `mike-calendar-refactor`, `agent-fix-login-validation`
-
-### 3.2 The Golden Rule: Never Use `git pull`
-
-**DO NOT use `git pull`** unless configured for rebase (`pull.rebase=true`).
-
-Always use fetch & rebase:
-
-```bash
-git fetch origin main:main    # Update local main without switching
-git rebase main               # Rebase your branch onto updated main
-```
-
-### 3.3 Standard Workflows
+### 1.3 Standard Workflows
 
 **Starting new work:**
 ```bash
 git fetch origin main:main
-git checkout -b {your-name}-{feature-description} main
+git checkout -b feature/my-feature main
 ```
 
 **Keeping your branch updated:**
 ```bash
 git fetch origin main:main
 git rebase main
-# If conflicts: resolve them, then git add . && git rebase --continue
+# If conflicts: resolve them, then `git add . && git rebase --continue`
 ```
 
 **Before creating a PR:**
 ```bash
 git fetch origin main:main
 git rebase main
-git push origin {branch-name} --force-with-lease
+git push origin feature/my-feature --force-with-lease
 ```
 
-### 3.4 Quick Reference
+### 1.4 Quick Reference
 
 | Action | Command |
 |--------|---------|
@@ -141,25 +70,62 @@ git push origin {branch-name} --force-with-lease
 | Push after rebase | `git push --force-with-lease` |
 | Check current branch | `git branch --show-current` |
 
-### 3.5 Agent Checklist
+### 1.5 Commit Attribution
 
-1. **Before starting work**: `git fetch origin main:main`
-2. **Check current branch**: Never work on `main`
-3. **During long work**: Periodically fetch and rebase
-4. **Before committing**: Fetch and rebase for clean history
-5. **When pushing after rebase**: Use `--force-with-lease`
+**DO NOT add AI co-author trailers or attribution.** All commits are attributed solely to the developer:
+
+- ❌ No `Co-Authored-By: Claude` or similar trailers
+- ❌ No `🤖 Generated with Claude Code` footers
+- ❌ No AI tool attribution in commit messages
 
 ---
 
-## 4. Inter-Agent Communication
+## 2. Development Workflow
 
-**🟠 HIGH - How to request changes in other projects.**
+**🟠 HIGH — Your standard work process.**
 
-You can only modify files in your home directory, with ONE EXCEPTION: you may write to other projects' `.claude/communication/` directories.
+### 2.1 Three-Phase Protocol
 
-### 4.1 Sending Messages
+All coding tasks follow a structured workflow:
 
-To request a change in another project, write a file to:
+#### Phase 1: Research → `.claude/research/{task}.md`
+
+- Gather context, analyze requirements
+- Explore existing code and patterns
+- Document alternatives and trade-offs
+- **No code in this phase**
+
+#### Phase 2: Plan → `.claude/plans/{task}.md`
+
+- Define implementation steps
+- List modules, functions, data flows
+- Identify edge cases and test strategies
+- **No code in this phase**
+
+#### Phase 3: Implement → `.claude/implementation/progress.md`
+
+- Log each action as you work
+- Record blockers and decisions
+- Update research/plan files as needed
+- **Coding happens here**
+
+### 2.2 Required Reading
+
+Before starting work, read:
+- `CODE_QUALITY.md` — Quality standards
+- `BEST_PRACTICES.md` — Engineering guidelines
+
+---
+
+## 3. Inter-Agent Communication
+
+**🟠 HIGH — How to communicate with other agents.**
+
+Agents communicate by writing files to each other's `.claude/communication/` directories.
+
+### 3.1 Sending Messages
+
+Write a file to the target project's communication directory:
 
 ```
 TARGET_PROJECT/.claude/communication/from-{your-project}-{timestamp}.md
@@ -171,57 +137,90 @@ Include:
 - How to verify the change works
 - Whether you need a response
 
-### 4.2 Example
+### 3.2 Receiving Messages
 
-If you're in `desktop-generator` and need a change in `cudag`:
+Monitor your `.claude/communication/` directory for new files:
 
+1. **Read** the message file completely
+2. **Understand** what the requesting agent needs
+3. **Execute** using your standard workflow
+4. **Mark processed** by renaming to `{filename}.processed`
+5. **Respond** if requested
+
+---
+
+## 4. Context Engineering
+
+**🟡 MEDIUM — Keep context clean and manageable.**
+
+### 4.1 Rules
+
+- Run all tools in background subagents when possible
+- Run debugging and log reading in subagents
+- Update workflow documents with completed work
+- Document everything in files — do not rely on memory
+- Break complex tasks into smaller, focused subagent operations
+
+### 4.2 Subagent Model
+
+For complex tasks:
+
+1. **Decompose** the task into atomic sub-tasks
+2. **Run subagents independently** — each with clear inputs/outputs
+3. **Compose results** — integrate subagent outputs in the main context
+
+---
+
+## 5. Code Quality
+
+**🟡 MEDIUM — Quality standards for all code.**
+
+### 5.1 Python
+
+| Metric | Limit |
+|--------|-------|
+| Cyclomatic complexity | ≤ 10 per function |
+| Nesting depth | ≤ 3 levels |
+| Function length | ≤ 50-60 lines |
+| Parameters | ≤ 5 (excluding self/cls) |
+
+Required tools:
+- `ruff check` — Linting
+- `ruff format` — Formatting
+- `mypy` — Type checking
+
+### 5.2 TypeScript
+
+| Metric | Limit |
+|--------|-------|
+| Cyclomatic complexity | ≤ 10 per function |
+| Nesting depth | ≤ 3 levels |
+| Function length | ≤ 50 lines |
+| JSX nesting | ≤ 4 levels |
+
+Required:
+- TypeScript strict mode
+- No `any` types
+- ESLint and Prettier passing
+
+### 5.3 Pre-Commit Checks
+
+```bash
+# Python
+./scripts/pre-commit.sh
+
+# TypeScript
+./scripts/pre-commit-ts.sh
 ```
-projects/cudag/.claude/communication/from-desktop-generator-20251221_143000.md
-```
 
 ---
 
-## 5. Development Workflow
+## Philosophy
 
-**🟡 MEDIUM - Your standard work process.**
+> Write code that future maintainers will thank you for.
 
-### 5.1 Required Documents
-
-Create these files for every task:
-
-| Document | Location | Purpose |
-|----------|----------|---------|
-| Research | `.claude/research/{task}.md` | External/internal info gathering |
-| Plan | `.claude/plans/{task}.md` | Implementation steps (no code) |
-| Todos | `.claude/todos/{task}.md` | Trackable checklist |
-
-These files should link to each other for context verification.
-
-### 5.2 Required Reading
-
-Read `CODE_QUALITY.md` and follow it religiously.
-
----
-
-## 6. Context Engineering
-
-**🟡 MEDIUM - Keep the main context thread clean.**
-
-### 6.1 Rules
-
-- Run all tools in background subagents - do not pollute main context
-- Run all debugging and log reading in subagents
-- Update workflow documents with completed and discovered work
-- Document everything in files - do not rely on memory
-
----
-
-## 7. Role & Identity
-
-**🟢 INFO - Who you are.**
-
-You are the code personified. When addressed, you are "the agent" or "the code." Data is code and code is data.
-
-You are the master of your working directory (your home). You can read other repositories up to the submodule root, but only make changes in your home directory (except for inter-agent communication).
-
-You are an AMAZING autonomous coding agent.
+- **Correctness first** — Small correct solutions beat clever incomplete ones
+- **Functional at the core** — Data in → data out, side effects at the edges
+- **Strict typing** — Type errors are build failures
+- **Low complexity** — Small functions, shallow nesting
+- **Good ancestor** — Write code you'd be proud to inherit

@@ -1,313 +1,278 @@
-# Claude Autonomous Code Starter Kit
+<div align="center">
 
-A comprehensive starter kit for building projects with Claude Code that enforces **30 years of software engineering best practices** through automated guardrails.
+# Claude Code Guardrails
 
-## Features
+### Development intelligence — commodified and distilled.
 
-- **Multi-Layer Guardrails** - PreToolUse/PostToolUse hooks + Hookify rules
-- **Code Quality Enforcement** - Python and TypeScript anti-pattern detection
-- **Secret Protection** - 50+ secret patterns detected and blocked
-- **Anti-Pattern Detection** - Prevents silent exceptions, `any` types, junk drawer dirs
-- **Three-Phase Protocol** - Research → Plan → Implement workflow
-- **Auto-Formatting** - Ruff (Python) and Prettier (TypeScript) on save
-- **Inter-Agent Communication** - File-based messaging between autonomous agents
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Quick Start
+**30 years of software engineering wisdom, automatically enforced. Vibe code freely — the agent handles the rest.**
 
-### 1. Copy the starter kit to your project
+[The Idea](#-the-idea) •
+[Heritage](#-heritage) •
+[Quick Start](#-quick-start) •
+[What Gets Caught](#-what-gets-caught)
+
+</div>
+
+---
+
+## 💡 The Idea
+
+You shouldn't need to know "all the things" to write great code.
+
+This toolkit encodes **decades of hard-won lessons** into guardrails that run automatically. You focus on building. The agent obsesses over quality, security, and best practices in the background.
+
+**The deal:**
+- ✅ You vibe, experiment, move fast
+- ✅ The agent catches anti-patterns before they ship
+- ✅ Secrets get blocked before they leak
+- ✅ Dangerous commands get intercepted
+- ✅ Code gets auto-formatted on save
+- ✅ You learn the "why" from the block messages
+
+It's like pair programming with someone who's mass-read every post-mortem and style guide — except they never get tired and they're always watching.
+
+---
+
+## 📜 Heritage
+
+Every rule here has a lineage. These aren't arbitrary style preferences — they're lessons extracted from languages and paradigms that shaped modern software:
+
+| Principle | Origin | Era | What We Learned |
+|-----------|--------|-----|-----------------|
+| **Immutability** | LISP¹, Haskell² | 1958+ | Mutation causes bugs. Return new data instead. |
+| **First-class functions** | LISP¹, Scheme³ | 1958+ | Pass behavior around like data. |
+| **Strong typing** | ML⁴, Haskell², TypeScript | 1973+ | Catch errors at compile time, not 3am. |
+| **Pure functions** | Haskell², Erlang⁵ | 1990+ | Same input → same output. No surprises. |
+| **Fail fast** | Erlang⁵ | 1986+ | Crash early with context, don't hide errors. |
+| **Composition over inheritance** | Gang of Four⁶, Effective Java⁷ | 1994+ | Small pieces that combine > deep hierarchies. |
+| **Convention over configuration** | Ruby on Rails⁸ | 2004+ | Sensible defaults beat endless options. |
+
+The full breakdown is in [`ANTI_PATTERNS.md`](ANTI_PATTERNS.md) — 14 sections covering everything from homoiconicity to dependency injection, with examples in Python and TypeScript.
+
+---
+
+## 📚 The Three Files That Matter
+
+| File | What It Is | When To Read |
+|------|------------|--------------|
+| [**`ANTI_PATTERNS.md`**](ANTI_PATTERNS.md) | 14-section deep dive into programming wisdom from LISP to modern FP. The "why" behind every guardrail. | When you want to level up |
+| [**`BEST_PRACTICES.md`**](BEST_PRACTICES.md) | Quick reference. Anti-patterns to avoid, code standards, security rules. | Before starting a project |
+| [**`CODE_QUALITY.md`**](CODE_QUALITY.md) | Python-specific quality philosophy. Complexity limits, functional design, error handling. | When writing Python |
+
+These documents aren't just rules — they're an education. Each pattern links back to the real-world failures that inspired it.
+
+---
+
+## ⚡ Quick Start
 
 ```bash
-cp -r projects/claude-autonomous-code-starter/* /path/to/your/project/
+# Clone it
+git clone https://github.com/your-org/claude-code-guardrails.git
+
+# Copy to your project
+cp -r claude-code-guardrails/* /path/to/your/project/
+
+# Install deps
+pip install pyyaml ruff mypy radon
+
+# That's it. Guardrails activate automatically.
 ```
 
-### 2. Install dependencies
+The moment Claude Code runs in your project, every operation gets validated. No configuration needed.
 
-For Python projects:
+---
+
+## 🚫 What Gets Caught
+
+### Bad Code Patterns
+
+The agent blocks these before they hit your codebase:
+
+```python
+# ❌ Silent exception — hides bugs for months
+try:
+    do_thing()
+except:
+    pass  # BLOCKED: "Never silently swallow exceptions"
+
+# ❌ Print debugging — use logging
+print("here")  # BLOCKED: "Use logging instead of print"
+```
+
+```typescript
+// ❌ any type — defeats TypeScript's whole purpose
+function process(data: any) { }  // BLOCKED: "Avoid 'any', use proper types"
+
+// ❌ Console spam
+console.log("debug")  // BLOCKED: "Remove console.log from production"
+```
+
+### Secrets (40+ Patterns)
+
+```
+❌ ghp_abc123...     → GitHub PAT detected
+❌ sk-ant-xyz...     → Anthropic key detected
+❌ AKIA0123...       → AWS access key detected
+❌ -----BEGIN RSA... → Private key detected
+```
+
+### Dangerous Commands
+
 ```bash
-pip install pyyaml ruff mypy radon pytest
+❌ rm -rf /          # nope
+❌ git push --force  # nope
+❌ chmod 777         # nope
+❌ curl ... | sh     # definitely nope
 ```
 
-For TypeScript projects:
-```bash
-npm install
-```
-
-### 3. Set up git hooks (optional)
-
-```bash
-chmod +x scripts/pre-commit.sh
-ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
-```
-
-### 4. Create your COPYRIGHT.txt
-
-```bash
-cat > COPYRIGHT.txt << 'EOF'
-# Copyright (c) 2025 Your Name. All rights reserved.
-EOF
-```
-
-## Directory Structure
+### Junk Drawer Directories
 
 ```
-your-project/
-├── .claude/
-│   ├── settings.json          # Claude hooks configuration
-│   ├── commands/              # Custom slash commands
-│   ├── communication/         # Inter-agent messaging
-│   ├── plans/                 # Implementation plans (no code)
-│   ├── research/              # Research documents (no code)
-│   ├── todos/                 # Task tracking files
-│   └── implementation/
-│       └── progress.md        # Implementation log
-├── scripts/
-│   ├── guardrails/
-│   │   ├── config.yaml        # Security patterns configuration
-│   │   ├── utils.py           # Shared utilities
-│   │   ├── validate_edit.py   # PreToolUse: file path validation
-│   │   ├── validate_secrets.py # PreToolUse: secret detection
-│   │   ├── validate_command.py # PreToolUse: command validation
-│   │   └── post_write.py      # PostToolUse: formatting & copyright
-│   ├── pre-commit.sh          # Pre-commit quality checks
-│   ├── check_copyright.py     # Copyright header validation
-│   ├── update_copyright.py    # Copyright header insertion
-│   └── security-sweep.sh      # Secret scanning
-├── templates/
-│   ├── python/
-│   │   ├── pyproject.toml     # Python project template
-│   │   └── .pre-commit-config.yaml
-│   ├── typescript/
-│   │   ├── package.json       # TypeScript project template
-│   │   └── tsconfig.json
-│   ├── CLAUDE.md              # Project guidance template
-│   └── system.md              # Agent workflow protocol template
-├── examples/
-│   └── python-example/        # Working example project
-├── ANTI_PATTERNS.md           # 14-section LISP-inspired guide
-├── BEST_PRACTICES.md          # Quick reference for best practices
-├── CODE_QUALITY.md            # Python quality standards
-├── CLAUDE.md                  # Your project's Claude guidance
-├── system.md                  # Your agent workflow protocol
-└── COPYRIGHT.txt              # Your copyright header
+❌ utils/     → "Name it for what it IS"
+❌ helpers/   → "Use domain-specific directories"
+❌ common/    → "Everything has a proper home"
 ```
 
-## Guardrails System
+---
 
-The guardrails system uses **three layers of defense** to enforce best practices:
+## 🔧 How It Works
 
-### Layer 1: PreToolUse Hooks (Preventive)
+```
+┌────────────────────────────────────────────────┐
+│           You write code freely                │
+└────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────────┐
+│  PreToolUse Hooks (BEFORE it happens)          │
+│  • Block protected files (.env, keys)          │
+│  • Detect secrets in content                   │
+│  • Catch dangerous commands                    │
+│  • Flag anti-patterns                          │
+│                                                │
+│  → ALLOW or DENY with explanation              │
+└────────────────────────────────────────────────┘
+                       │
+                       ▼ (if allowed)
+┌────────────────────────────────────────────────┐
+│  PostToolUse Hooks (AFTER it happens)          │
+│  • Auto-format with ruff/prettier              │
+│  • Add copyright headers                       │
+│  • Apply auto-fixable lint rules               │
+└────────────────────────────────────────────────┘
+```
 
-| Hook | Purpose |
-|------|---------|
-| `validate_edit.py` | Blocks writes to sensitive files (.env, .git/, credentials, keys) |
-| `validate_secrets.py` | Detects 50+ secret patterns (API keys, tokens, connection strings) |
-| `validate_command.py` | Blocks dangerous commands (rm -rf, force push, chmod 777) |
-| `validate_quality.py` | Detects code anti-patterns (silent exceptions, `any` types, junk drawers) |
+Everything happens automatically. You just code.
 
-### Layer 2: PostToolUse Hooks (Automatic Maintenance)
+---
 
-| Hook | Purpose |
-|------|---------|
-| `post_write.py` | Auto-formats Python (ruff) and TypeScript (prettier), adds copyright headers |
+## 📊 Quality Standards
 
-### Layer 3: Hookify Rules (Content-Based Blocking)
+These limits exist because complexity kills projects:
 
-| Rule | Purpose |
-|------|---------|
-| `hookify.secrets-detection.local.md` | Blocks API keys in code |
-| `hookify.env-files.local.md` | Prevents committing .env files |
-| `hookify.hardcoded-urls.local.md` | Blocks hardcoded deployment URLs |
-| `hookify.password-detection.local.md` | Detects hardcoded passwords |
-| `hookify.quality-python.local.md` | Enforces Python quality standards |
-| `hookify.any-type.local.md` | Blocks TypeScript `any` type usage |
-| `hookify.silent-exceptions.local.md` | Blocks silent exception handlers |
-| `hookify.junk-drawers.local.md` | Blocks utils/helpers/common directories |
-| `hookify.console-statements.local.md` | Warns on console.log/print statements |
+### Python
 
-### Configuration
+| Metric | Limit | Why |
+|--------|-------|-----|
+| Cyclomatic complexity | ≤ 10 | Complex = buggy |
+| Nesting depth | ≤ 3 | Deep = confusing |
+| Function length | ≤ 50 lines | Long = doing too much |
+| Parameters | ≤ 5 | Many = hidden complexity |
 
-All patterns are centralized in `scripts/guardrails/config.yaml`:
+### TypeScript
+
+| Metric | Limit | Why |
+|--------|-------|-----|
+| `any` types | **0** | Defeats the type system |
+| JSX nesting | ≤ 4 | Component trees get wild |
+| Nesting depth | ≤ 3 | Same as Python |
+
+---
+
+## ⚙️ Configuration
+
+All patterns live in one file: `scripts/guardrails/config.yaml`
 
 ```yaml
-# Block writes to these files
-protected_paths:
-  block:
-    - '\.env($|\.).*'
-    - '^\.git/'
-    - 'credentials\.json'
-    - '\.npmrc$'               # NPM credentials
-    - 'kubeconfig'             # Kubernetes secrets
-
-# Detect these secret patterns (50+ patterns)
+# Secrets to detect
 secrets:
-  - pattern: 'sk-ant-[a-zA-Z0-9\-]{20,}'
-    name: Anthropic API Key
   - pattern: 'ghp_[a-zA-Z0-9]{36}'
     name: GitHub Personal Access Token
-  # ... and many more
 
-# Block these commands
+# Commands to block
 commands:
   block:
-    - 'rm\s+-rf\s+/'
+    - 'rm\s+-rf\s+[/~]'
     - 'git\s+push.*--force'
-    - 'curl.*\|\s*(ba)?sh'     # Piping to shell
 
 # Anti-patterns by language
 anti_patterns:
   python:
-    - pattern: 'except.*:\s*\n\s*pass'
+    - pattern: 'except\s*:\s*\n\s*pass'
       name: Silent exception handler
   typescript:
     - pattern: ':\s*any\b'
       name: any type usage
 
-# Forbidden directories
+# Directories that shouldn't exist
 junk_drawers:
   - 'utils/'
   - 'helpers/'
-  - 'common/'
 ```
 
-## Three-Phase Protocol
+Add your own patterns. Remove ones you disagree with. It's your codebase.
 
-All coding tasks follow this workflow:
+---
 
-### 1. Research Phase → `.claude/research/<filename>`
-
-- Gather context, analyze requirements
-- Explore existing code and patterns
-- Document alternatives and trade-offs
-- **No code in this phase**
-
-### 2. Planning Phase → `.claude/plans/<filename>`
-
-- Define implementation steps
-- List modules, functions, data flows
-- Identify edge cases and test strategies
-- **No code in this phase**
-
-### 3. Implementation → `.claude/implementation/progress.md`
-
-- Log each action as you work
-- Record blockers and decisions
-- Update research/plan files as needed
-- **Coding happens here**
-
-## Inter-Agent Communication
-
-Agents can communicate by writing files to each other's `.claude/communication/` directories:
+## 🏃 Commands
 
 ```bash
-# Send a message to another project
-echo "Please update the shared API client..." > \
-  ../other-project/.claude/communication/from-my-project-$(date +%s).md
+./scripts/pre-commit.sh        # Check Python (staged files)
+./scripts/pre-commit.sh --all  # Check Python (all files)
+./scripts/pre-commit-ts.sh     # Check TypeScript
+./scripts/security-sweep.sh    # Scan for secrets
 ```
 
-The receiving agent watches for new messages and executes the requested work.
+---
 
-## Code Quality
+## 📄 License
 
-### Python Quality Gates
+MIT — do whatever you want with it.
 
-| Check | Tool | Threshold |
-|-------|------|-----------|
-| Lexical | ruff check | Zero errors |
-| Formatting | ruff format | Enforced |
-| Type checking | mypy --strict | Zero errors |
-| Complexity | radon | Max CC: 10 |
-| Function length | - | Max 50-60 lines |
-| Nesting depth | - | Max 3 levels |
+---
 
-### TypeScript Quality Gates
+## 📖 Credits & Influences
 
-| Check | Tool | Threshold |
-|-------|------|-----------|
-| Linting | ESLint | Zero warnings |
-| Formatting | Prettier | Enforced |
-| Type checking | tsc --noEmit | Zero errors |
-| No `any` types | - | Blocked by guardrails |
-| JSX nesting | - | Max 4 levels |
+The ideas in this toolkit stand on the shoulders of giants:
 
-### Running Quality Checks
+<sup>**1**</sup> **LISP** (1958) — John McCarthy, MIT. The second-oldest high-level language still in use. Pioneered first-class functions, recursion, garbage collection, and the radical idea that code is data. *"Lisp is worth learning for the profound enlightenment experience you will have when you finally get it."* — Eric S. Raymond
 
-```bash
-# Python: Check staged files
-./scripts/pre-commit.sh
+<sup>**2**</sup> **Haskell** (1990) — Simon Peyton Jones, Philip Wadler, and the Haskell Committee. Pure functional programming, strong static typing, and the proof that side-effect-free code isn't just possible — it's practical.
 
-# Python: Check all tracked files
-./scripts/pre-commit.sh --all
+<sup>**3**</sup> **Scheme** (1975) — Guy L. Steele Jr. and Gerald Jay Sussman, MIT. Lexical scoping and closures. The insight that functions can capture their environment changed everything.
 
-# TypeScript: Check staged files
-./scripts/pre-commit-ts.sh
+<sup>**4**</sup> **ML** (1973) — Robin Milner, University of Edinburgh. Type inference and parametric polymorphism. The idea that the compiler can figure out types for you — and catch your mistakes.
 
-# TypeScript: Check all tracked files
-./scripts/pre-commit-ts.sh --all
+<sup>**5**</sup> **Erlang** (1986) — Joe Armstrong, Ericsson. "Let it crash" philosophy. The revolutionary idea that failing fast with good error messages beats defensive programming that hides problems.
 
-# Security sweep (both languages)
-./scripts/security-sweep.sh
-```
+<sup>**6**</sup> **Design Patterns** (1994) — Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides (Gang of Four). "Favor composition over inheritance" — the antidote to deep class hierarchies.
 
-### Best Practices Guide
+<sup>**7**</sup> **Effective Java** (2001) — Joshua Bloch, Sun Microsystems. Practical wisdom for writing maintainable code. Item 18: "Favor composition over inheritance."
 
-See `BEST_PRACTICES.md` for comprehensive guidelines including:
-- Anti-patterns to avoid (with examples)
-- Functional programming principles
-- Domain-driven directory structure
-- Naming conventions
-- Error handling standards
+<sup>**8**</sup> **Ruby on Rails** (2004) — David Heinemeier Hansson (DHH). "Convention over configuration" — the insight that sensible defaults beat endless options.
 
-## Templates
+**Additional influences:** Paul Graham (*On Lisp*, *Hackers & Painters*), Rich Hickey (Clojure, "Simple Made Easy"), Rob Pike & Ken Thompson (Go, Unix philosophy), Martin Fowler (*Refactoring*), Robert C. Martin (*Clean Code*).
 
-### Python Project
+---
 
-Copy `templates/python/pyproject.toml` and replace placeholders:
+<div align="center">
 
-- `{{PROJECT_NAME}}` - Your project name
-- `{{PROJECT_DESCRIPTION}}` - Short description
-- `{{AUTHOR_NAME}}` - Your name
-- `{{PACKAGE_NAME}}` - Python package name
+**You bring the creativity. The agent brings the discipline.**
 
-### TypeScript Project
+*30 years of lessons. Zero lectures. Just better code.*
 
-Copy `templates/typescript/package.json` and `tsconfig.json`.
-
-### Claude Guidance
-
-Copy `templates/CLAUDE.md` and `templates/system.md` to your project root.
-
-## Customization
-
-### Adding New Secret Patterns
-
-Edit `scripts/guardrails/config.yaml`:
-
-```yaml
-secrets:
-  - pattern: 'your_pattern_here'
-    name: Your Secret Type
-```
-
-### Adding Protected Paths
-
-```yaml
-protected_paths:
-  block:
-    - 'your/sensitive/path'
-  warn:
-    - 'your/config/path'
-```
-
-### Adding Dangerous Commands
-
-```yaml
-commands:
-  block:
-    - 'dangerous_command'
-  warn:
-    - 'risky_command'
-```
-
-## License
-
-MIT License - see LICENSE for details.
+</div>
