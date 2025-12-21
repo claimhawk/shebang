@@ -5,17 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="30">
     <title>Shebang! Development Portal</title>
-    <style>
-        :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --border: #30363d;
-            --text: #c9d1d9;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --success: #3fb950;
-            --warning: #d29922;
-            --purple: #a371f7;
+    <style>        :root {
+            --bg: #0a0a14;
+            --card: #12111f;
+            --border: #252338;
+            --text: #e8e8f0;
+            --text-muted: #8080a0;
+            --accent: #a78bfa;
+            --purple: #c084fc;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --orange: #fb923c;
+            --terminal-bg: #0a0a14;
+            --terminal-green: #4ade80;
+            --terminal-yellow: #fbbf24;
+            --terminal-red: #f87171;
+            --terminal-blue: #60a5fa;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -70,8 +76,8 @@
             padding: 4px 8px;
             border-radius: 4px;
         }
-        .nav a:hover { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
-        .nav a.active { color: var(--accent); background: rgba(88, 166, 255, 0.15); }
+        .nav a:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+        .nav a.active { color: var(--text); background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid var(--accent); }
         .status { font-size: 12px; color: var(--text-muted); }
         .status::before { content: "●"; color: var(--success); margin-right: 6px; }
         .grid {
@@ -116,10 +122,10 @@
             border-radius: 12px;
             font-weight: 500;
         }
-        .badge-progress { background: rgba(88, 166, 255, 0.2); color: var(--accent); }
-        .badge-complete { background: rgba(63, 185, 80, 0.2); color: var(--success); }
-        .badge-pending { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
-        .badge-core { background: rgba(163, 113, 247, 0.2); color: var(--purple); }
+        .badge-progress { background: rgba(86, 156, 214, 0.2); color: var(--accent); }
+        .badge-complete { background: rgba(78, 201, 176, 0.2); color: var(--success); }
+        .badge-pending { background: rgba(220, 220, 170, 0.2); color: var(--warning); }
+        .badge-core { background: rgba(197, 134, 192, 0.2); color: var(--purple); }
         .task-desc { font-size: 12px; color: var(--text-muted); }
         .feature-list { list-style: none; }
         .feature-list li {
@@ -191,7 +197,7 @@
             transform: rotate(2deg);
         }
         .kanban-col.drag-over {
-            background: rgba(88, 166, 255, 0.1);
+            background: rgba(86, 156, 214, 0.1);
             border-radius: 6px;
         }
         .kanban-col.drag-over .kanban-header {
@@ -317,17 +323,24 @@
         .paper-title { font-weight: 600; color: var(--accent); margin-bottom: 4px; }
         .paper-thesis { color: var(--text-muted); font-style: italic; }
         .quick-start {
-            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
+            background: var(--card);
             border: 1px solid var(--accent);
+            border-left: 3px solid var(--accent);
         }
         .quick-start h2 { color: var(--accent); }
         .command {
-            background: var(--bg);
+            background: var(--terminal-bg);
             padding: 12px;
-            border-radius: 6px;
-            font-family: 'SF Mono', Monaco, monospace;
+            border-radius: 4px;
+            font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
             font-size: 13px;
             margin: 8px 0;
+            border: 1px solid var(--border);
+            color: var(--terminal-green);
+        }
+        .command::before {
+            content: "$ ";
+            color: var(--terminal-yellow);
         }
         .metrics-grid {
             display: grid;

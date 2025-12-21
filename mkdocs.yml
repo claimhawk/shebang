@@ -58,6 +58,10 @@ markdown_extensions:
 docs_dir: docs
 site_dir: site
 
+# Custom CSS - Shebang theme (generated from theme.yaml)
+extra_css:
+  - stylesheets/shebang.css
+
 # Extra
 extra:
   social:

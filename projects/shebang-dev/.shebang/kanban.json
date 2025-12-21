@@ -208,6 +208,15 @@
           "category": "docs",
           "created": "2025-12-21T16:40:00Z",
           "artifact": "/docs/marketing/PRESENTATION.md"
+        },
+        {
+          "id": "unified-theme",
+          "title": "Unified theme system",
+          "description": "Master theme.yaml config powering web portal, MkDocs, and macOS app colors. Run scripts/generate-theme.py to regenerate.",
+          "meta": "theme.yaml + generator",
+          "category": "core",
+          "completed": "2025-12-21T17:25:00Z",
+          "artifact": "/theme.yaml"
         }
       ]
     }
