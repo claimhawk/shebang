@@ -1,5 +1,6 @@
 # Guardrails Configuration
 # Centralized patterns for all guardrail scripts
+# Enforcement for Python and TypeScript code quality
 
 # Protected file patterns (regex)
 # These patterns are matched against file paths
@@ -20,6 +21,11 @@ protected_paths:
     - 'private.*key'               # Generic private key files
     - '\.htpasswd$'                # Apache password files
     - 'shadow$'                    # Unix shadow passwords
+    - '\.npmrc$'                   # NPM credentials
+    - '\.netrc$'                   # Network credentials
+    - 'kubeconfig'                 # Kubernetes credentials
+    - '\.kube/config'              # Kubernetes config
+    - 'terraform\.tfstate'         # Terraform state (contains secrets)
 
   # Warn: Operations allowed but flagged
   warn:
@@ -29,6 +35,10 @@ protected_paths:
     - 'docker-compose'             # Docker compose files
     - 'pyproject\.toml$'           # Python project config
     - 'package\.json$'             # Node.js project config
+    - 'tsconfig\.json$'            # TypeScript config
+    - 'next\.config\.'             # Next.js config
+    - '\.eslintrc'                 # ESLint config
+    - 'vercel\.json$'              # Vercel deployment config
 
 # Secret patterns (regex -> description)
 # These patterns are matched against file content
@@ -108,6 +118,94 @@ secrets:
     name: SendGrid API Key
   - pattern: 'key-[0-9a-zA-Z]{32}'
     name: Mailgun API Key
+
+  # Additional tokens and keys
+  - pattern: 'npm_[a-zA-Z0-9]{36}'
+    name: NPM Token
+  - pattern: 'pypi-[a-zA-Z0-9\-]{100,}'
+    name: PyPI Token
+  - pattern: 'v1\.[a-f0-9]{40}'
+    name: Vercel Token
+  - pattern: 'dop_v1_[a-f0-9]{64}'
+    name: DigitalOcean Token
+  - pattern: 'glpat-[a-zA-Z0-9\-]{20,}'
+    name: GitLab Personal Access Token
+  - pattern: 'xoxb-[0-9]+-[0-9]+-[a-zA-Z0-9]+'
+    name: Slack Bot Token
+  - pattern: 'discord\.com/api/webhooks/[0-9]+/[a-zA-Z0-9_-]+'
+    name: Discord Webhook URL
+  - pattern: 'Bearer\s+[a-zA-Z0-9\-_=]+\.[a-zA-Z0-9\-_=]+\.[a-zA-Z0-9\-_=]+'
+    name: JWT Token
+  - pattern: 'eyJ[a-zA-Z0-9\-_=]+\.eyJ[a-zA-Z0-9\-_=]+\.[a-zA-Z0-9\-_=]+'
+    name: JWT Token (raw)
+
+# Code quality anti-patterns (regex)
+# These patterns detect bad code practices
+anti_patterns:
+  # Block: These patterns indicate serious code quality issues
+  python:
+    # Silent exception handling
+    - pattern: 'except\s*(Exception|BaseException)?:\s*\n\s*(pass|\.\.\.)'
+      name: Silent exception handler (swallowing errors)
+      message: "Never silently swallow exceptions. At minimum, log with context."
+
+    # Bare except
+    - pattern: 'except:\s*\n'
+      name: Bare except clause
+      message: "Always specify exception types. Bare except catches SystemExit and KeyboardInterrupt."
+
+    # Global mutable state
+    - pattern: '^[A-Z_]+\s*=\s*(\[\]|\{\}|\{\s*\})'
+      name: Global mutable state
+      message: "Avoid global mutable state. Use dependency injection or thread-local storage."
+
+    # print statements in production code
+    - pattern: '^\s*print\s*\('
+      name: Print statement
+      message: "Use logging instead of print statements for production code."
+
+  typescript:
+    # Any type usage
+    - pattern: ':\s*any\b'
+      name: "any" type usage
+      message: "Avoid using 'any'. Use proper types or 'unknown' with type guards."
+
+    # Non-null assertion abuse
+    - pattern: '\w+!\.'
+      name: Non-null assertion
+      message: "Avoid non-null assertions (!). Use proper null checks or optional chaining."
+
+    # Console.log in production
+    - pattern: 'console\.(log|debug|info)\('
+      name: Console log statement
+      message: "Remove console.log from production code. Use a proper logging library."
+
+  # Warn patterns (allowed but flagged)
+  warn:
+    # Magic numbers
+    - pattern: '(?<![\d\w])(?:60|3600|86400|1000|1024|8080|3000|5000)(?![\d\w])'
+      name: Potential magic number
+      message: "Consider extracting magic numbers to named constants."
+
+    # TODO comments
+    - pattern: '(TODO|FIXME|HACK|XXX):'
+      name: TODO comment detected
+      message: "TODO found - ensure it's tracked in your issue tracker."
+
+    # Long lines (indication of complexity)
+    - pattern: '.{120,}'
+      name: Long line
+      message: "Lines over 120 characters may indicate complexity. Consider refactoring."
+
+# Junk drawer directory patterns (forbidden)
+junk_drawers:
+  - 'utils/'
+  - 'helpers/'
+  - 'common/'
+  - 'misc/'
+  - 'shared/'
+  - 'lib/utils'
+  - 'src/utils'
 
 # Dangerous shell commands (regex)
 commands:
