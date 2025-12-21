@@ -77,3 +77,26 @@ Thumbs.db
 credentials.json
 secrets.yaml
 secrets.yml
+
+# App build artifacts
+# Build
+.build/
+Shebang.app/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+*.dSYM
+
+# Package
+.swiftpm/
+Package.resolved
+
+# IDE
+.idea/
+*.xcworkspace/
+
+# OS
+.DS_Store
+
+# Documentation build output
+site/

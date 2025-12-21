@@ -1,5 +1,5 @@
-// Copyright 2024 Shebang - Automated Development Environment
-// SPDX-License-Identifier: MIT
+// Shebang - Automated Development Environment
+// Public Domain - https://unlicense.org
 
 import SwiftUI
 import SwiftTerm
@@ -18,6 +18,9 @@ struct SwiftTermView: NSViewRepresentable {
 
     // Observe pending commands from AppState
     var pendingCommand: String?
+
+    // Observe pending control characters (Ctrl+C, etc.)
+    var pendingControlChar: UInt8?
 
     func makeNSView(context: Context) -> ReadOnlyTerminalContainer {
         let terminalView = LocalProcessTerminalView(frame: .zero)
@@ -44,6 +47,13 @@ struct SwiftTermView: NSViewRepresentable {
             execName: shell
         )
 
+        // Set up shell integration for directory tracking (zsh)
+        // OSC 7 format: \e]7;file://hostname/path\e\\
+        let zshHook = """
+        chpwd() { printf '\\e]7;file://%s%s\\a' "$(hostname)" "$PWD" }
+        """
+        terminalView.send(txt: zshHook + "\n")
+
         // Change to session's working directory
         let cdCommand = "cd \"\(session.workingDirectory.path)\"\n"
         terminalView.send(txt: cdCommand)
@@ -52,6 +62,9 @@ struct SwiftTermView: NSViewRepresentable {
         if initialCommand == nil {
             terminalView.send(txt: "clear\n")
         }
+
+        // Emit initial directory for tracking
+        terminalView.send(txt: "printf '\\e]7;file://%s%s\\a' \"$(hostname)\" \"$PWD\"\n")
 
         // Wrap in read-only container that blocks keyboard input
         let container = ReadOnlyTerminalContainer(terminalView: terminalView)
@@ -71,6 +84,17 @@ struct SwiftTermView: NSViewRepresentable {
                 AppState.shared.terminal.pendingCommand = nil
             }
         }
+
+        // Send pending control character if available (Ctrl+C, Ctrl+D, etc.)
+        if let controlChar = pendingControlChar, let terminalView = context.coordinator.terminalView {
+            // Send the control character as raw byte using ArraySlice
+            let bytes: [UInt8] = [controlChar]
+            terminalView.send(data: bytes[...])
+            // Clear the pending control character on main thread
+            DispatchQueue.main.async {
+                AppState.shared.terminal.pendingControlChar = nil
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -86,6 +110,14 @@ struct SwiftTermView: NSViewRepresentable {
         env["LANG"] = "en_US.UTF-8"
         // Don't inherit the original PWD
         env.removeValue(forKey: "PWD")
+
+        // Enable shell integration for directory tracking
+        // This tells zsh/bash to emit OSC 7 sequences on directory change
+        env["TERM_PROGRAM"] = "Shebang"
+        env["TERM_PROGRAM_VERSION"] = "1.0"
+
+        // Set up prompt command for bash to report CWD
+        env["PROMPT_COMMAND"] = "printf '\\e]7;file://%s%s\\e\\\\' \"$HOSTNAME\" \"$PWD\""
 
         return env.map { "\($0.key)=\($0.value)" }
     }
@@ -110,9 +142,14 @@ struct SwiftTermView: NSViewRepresentable {
         }
 
         func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
-            // Directory changed - could update session CWD
+            // Directory changed - update session CWD reactively
             if let dir = directory {
-                print("Terminal CWD: \(dir)")
+                print("🔄 Terminal CWD changed to: \(dir)")
+                let url = URL(fileURLWithPath: dir)
+                DispatchQueue.main.async {
+                    print("🔄 Updating session CWD to: \(url.path)")
+                    AppState.shared.sessions.updateActiveSessionCWD(url)
+                }
             }
         }
 
@@ -127,22 +164,28 @@ struct SwiftTermView: NSViewRepresentable {
 
 /// Container that wraps terminal view and blocks keyboard input
 /// All input must go through the command bar
+/// Allows: text selection, copy (Cmd+C), scrolling
 class ReadOnlyTerminalContainer: NSView {
     let terminalView: LocalProcessTerminalView
+    private let padding: CGFloat = 12
 
     init(terminalView: LocalProcessTerminalView) {
         self.terminalView = terminalView
         super.init(frame: .zero)
 
-        // Add terminal as subview
+        // Match terminal background so padding looks internal
+        wantsLayer = true
+        layer?.backgroundColor = DefaultTheme.shared.background.cgColor
+
+        // Add terminal as subview with padding
         terminalView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(terminalView)
 
         NSLayoutConstraint.activate([
-            terminalView.topAnchor.constraint(equalTo: topAnchor),
-            terminalView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            terminalView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            terminalView.trailingAnchor.constraint(equalTo: trailingAnchor)
+            terminalView.topAnchor.constraint(equalTo: topAnchor, constant: padding),
+            terminalView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -padding),
+            terminalView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
+            terminalView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding)
         ])
     }
 
@@ -150,19 +193,37 @@ class ReadOnlyTerminalContainer: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // Block keyboard input - don't become first responder
-    override var acceptsFirstResponder: Bool { false }
+    // Allow first responder for copy operations
+    override var acceptsFirstResponder: Bool { true }
 
-    // Intercept key events
+    // Intercept key events - only allow copy (Cmd+C)
     override func keyDown(with event: NSEvent) {
-        // Don't pass to terminal - input goes through command bar
+        // Allow Cmd+C for copy
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "c" {
+            terminalView.keyDown(with: event)
+            return
+        }
+        // Block all other keyboard input
     }
 
     override func keyUp(with event: NSEvent) {
         // Don't pass to terminal
     }
 
-    // Allow mouse events for scrolling/selection
+    // Pass mouse events for text selection
+    override func mouseDown(with event: NSEvent) {
+        terminalView.mouseDown(with: event)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        terminalView.mouseDragged(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        terminalView.mouseUp(with: event)
+    }
+
+    // Allow mouse events for scrolling
     override func scrollWheel(with event: NSEvent) {
         terminalView.scrollWheel(with: event)
     }

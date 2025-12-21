@@ -1,0 +1,62 @@
+# Shebang Documentation Configuration
+# Build with: mkdocs build
+# Serve locally: mkdocs serve
+
+site_name: Shebang
+site_description: A truly intelligent development environment
+site_author: Shebang Team
+
+# Theme - Material for MkDocs (modern, clean)
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: cyan
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    logo: material/console
+
+# Navigation structure
+nav:
+  - Home: index.md
+  - Getting Started:
+    - User Guide: USER_GUIDE.md
+  - Advanced:
+    - Power User Guide: POWER_USER_GUIDE.md
+    - Session Persistence: DESIGN_SESSION_PERSISTENCE.md
+  - Development:
+    - Philosophy: PHILOSOPHY.md
+    - Voice Guide: VOICE.md
+  - API Reference:
+    - Swift API: api/swift.md
+
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+# Build settings
+docs_dir: docs
+site_dir: site
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/shebang

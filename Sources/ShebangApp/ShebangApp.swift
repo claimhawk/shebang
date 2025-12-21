@@ -1,5 +1,5 @@
-// Copyright 2024 Shebang - Automated Development Environment
-// SPDX-License-Identifier: MIT
+// Shebang - Automated Development Environment
+// Public Domain - https://unlicense.org
 
 import SwiftUI
 
@@ -8,13 +8,35 @@ struct ShebangApp: App {
     // AppState is a singleton that survives hot reloads
     // Views access it via AppState.shared
 
+    @State private var showingSplash = true
+
     var body: some Scene {
         WindowGroup {
-            MainWindowView()
-                .onAppear {
-                    // Load favorites on first launch
-                    AppState.shared.ui.loadFavorites()
+            ZStack {
+                // Main window (disabled during splash)
+                MainWindowView()
+                    .disabled(showingSplash)
+                    .opacity(showingSplash ? 0 : 1)
+                    .onAppear {
+                        // Load favorites on first launch
+                        AppState.shared.ui.loadFavorites()
+                    }
+
+                // Splash screen overlay
+                if showingSplash {
+                    SplashScreenView()
+                        .transition(.opacity)
+                        .zIndex(1)
+                        .onAppear {
+                            // Hide splash after 3 seconds
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                withAnimation(.easeInOut(duration: 0.5)) {
+                                    showingSplash = false
+                                }
+                            }
+                        }
                 }
+            }
         }
         .windowStyle(.automatic)
         .windowToolbarStyle(.unified)

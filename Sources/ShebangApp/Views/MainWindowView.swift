@@ -1,5 +1,5 @@
-// Copyright 2024 Shebang - Automated Development Environment
-// SPDX-License-Identifier: MIT
+// Shebang - Automated Development Environment
+// Public Domain - https://unlicense.org
 
 import SwiftUI
 
@@ -46,14 +46,45 @@ struct MainWindowView: View {
                     )
                 }
 
-                // Center: Terminal + Command bar (takes remaining space)
+                // Center: Terminal + Favorites + Command bar (takes remaining space)
                 VStack(spacing: 0) {
-                    TerminalCanvasView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    // Terminal area with file preview overlay
+                    ZStack(alignment: .leading) {
+                        TerminalCanvasView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                    // Command bar at bottom
+                        // File preview overlays the terminal (not the whole center column)
+                        if state.ui.filePreviewOpen, let file = state.ui.previewingFile {
+                            FilePreviewView(file: file, onClose: closeFilePreview)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(.ultraThinMaterial)
+                                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                        }
+                    }
+
+                    // Favorites drawer (above command bar)
+                    if state.ui.favoritesDrawerOpen {
+                        VStack(spacing: 0) {
+                            HorizontalPanelHandle(isOpen: Binding(
+                                get: { state.ui.favoritesDrawerOpen },
+                                set: { state.ui.favoritesDrawerOpen = $0 }
+                            ))
+                            FavoritesDrawerView()
+                                .frame(height: favoritesDrawerHeight)
+                                .background(.ultraThinMaterial)
+                        }
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else {
+                        // Just the handle when closed
+                        HorizontalPanelHandle(isOpen: Binding(
+                            get: { state.ui.favoritesDrawerOpen },
+                            set: { state.ui.favoritesDrawerOpen = $0 }
+                        ))
+                    }
+
+                    // Command bar at bottom (dynamic height for multi-line)
                     CommandBarView()
-                        .frame(height: commandBarHeight)
+                        .frame(minHeight: commandBarHeight)
                         .background(Color(nsColor: .windowBackgroundColor))
                 }
 
@@ -82,61 +113,18 @@ struct MainWindowView: View {
                     )
                 }
             }
-
-            // Overlay layer: File preview (slides over terminal)
-            if state.ui.filePreviewOpen, let file = state.ui.previewingFile {
-                HStack(spacing: 0) {
-                    // Position after sidebar
-                    if state.ui.sidebarOpen {
-                        Spacer()
-                            .frame(width: sidebarWidth + 6) // sidebar + handle
-                    } else {
-                        Spacer()
-                            .frame(width: 6) // just handle
-                    }
-
-                    FilePreviewView(file: file, onClose: closeFilePreview)
-                        .frame(width: filePreviewWidth)
-                        .background(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.2), radius: 10, x: 5, y: 0)
-
-                    Spacer()
-                }
-                .transition(.move(edge: .leading))
-            }
-
-            // Overlay layer: Favorites drawer (slides up from bottom)
-            if state.ui.favoritesDrawerOpen {
-                VStack {
-                    Spacer()
-
-                    VStack(spacing: 0) {
-                        // Handle on TOP of drawer
-                        HorizontalPanelHandle(isOpen: Binding(
-                            get: { state.ui.favoritesDrawerOpen },
-                            set: { state.ui.favoritesDrawerOpen = $0 }
-                        ))
-
-                        FavoritesDrawerView()
-                            .frame(height: favoritesDrawerHeight)
-                            .background(.ultraThinMaterial)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: -5)
-                    .padding(.horizontal, 20)
-
-                    // Space for command bar
-                    Spacer()
-                        .frame(height: commandBarHeight + 10)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .frame(minWidth: 900, minHeight: 600)
         .animation(.easeInOut(duration: 0.25), value: state.ui.sidebarOpen)
         .animation(.easeInOut(duration: 0.25), value: state.ui.sessionsPanelOpen)
         .animation(.easeInOut(duration: 0.2), value: state.ui.filePreviewOpen)
         .animation(.easeInOut(duration: 0.2), value: state.ui.favoritesDrawerOpen)
+        .onChange(of: state.ui.sidebarOpen) { _, isOpen in
+            // Close file preview when sidebar closes
+            if !isOpen {
+                state.ui.filePreviewOpen = false
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { _ in
             state.ui.sidebarOpen.toggle()
         }
@@ -221,8 +209,8 @@ struct PanelHandle: View {
 
     var body: some View {
         Rectangle()
-            .fill(isHovered ? Color.accentColor.opacity(0.4) : Color(nsColor: .separatorColor).opacity(0.3))
-            .frame(width: 20)
+            .fill(isHovered ? Color.accentColor.opacity(0.3) : Color(nsColor: .separatorColor).opacity(0.5))
+            .frame(width: 6)
             .contentShape(Rectangle())
             .onHover { hovering in
                 isHovered = hovering
@@ -233,19 +221,14 @@ struct PanelHandle: View {
                 }
             }
             .onTapGesture {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                withAnimation(.easeInOut(duration: 0.25)) {
                     isOpen.toggle()
                 }
             }
             .overlay {
-                // Grip indicator lines
-                VStack(spacing: 4) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 1)
-                            .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
-                            .frame(width: 4, height: 4)
-                    }
-                }
+                Rectangle()
+                    .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
+                    .frame(width: 1)
             }
             .help(isOpen ? "Close panel" : "Open panel")
     }
@@ -265,8 +248,8 @@ struct HorizontalPanelHandle: View {
 
     var body: some View {
         Rectangle()
-            .fill(isHovered ? Color.accentColor.opacity(0.4) : Color(nsColor: .separatorColor).opacity(0.3))
-            .frame(height: 20)
+            .fill(isHovered ? Color.accentColor.opacity(0.3) : Color(nsColor: .separatorColor).opacity(0.5))
+            .frame(height: 6)
             .contentShape(Rectangle())
             .onHover { hovering in
                 isHovered = hovering
@@ -277,19 +260,14 @@ struct HorizontalPanelHandle: View {
                 }
             }
             .onTapGesture {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                withAnimation(.easeInOut(duration: 0.2)) {
                     isOpen.toggle()
                 }
             }
             .overlay {
-                // Grip indicator lines
-                HStack(spacing: 4) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 1)
-                            .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
-                            .frame(width: 4, height: 4)
-                    }
-                }
+                Rectangle()
+                    .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
+                    .frame(height: 1)
             }
             .help(isOpen ? "Close drawer" : "Open favorites")
     }

@@ -1,5 +1,5 @@
-// Copyright 2024 Shebang - Automated Development Environment
-// SPDX-License-Identifier: MIT
+// Shebang - Automated Development Environment
+// Public Domain - https://unlicense.org
 
 import SwiftUI
 
@@ -23,12 +23,14 @@ struct SidebarView: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if let session = state.sessions.activeSession {
                         // Show contents of working directory directly
+                        // Use id() to force recreation when CWD changes
                         DirectoryContentsView(
                             url: session.workingDirectory,
                             expandedFolders: $expandedFolders,
                             selectedFile: $selectedFile,
                             onFileSelect: handleFileSelect
                         )
+                        .id(session.workingDirectory)
                     }
                 }
                 .padding(.vertical, 8)
@@ -136,48 +138,46 @@ struct DirectoryContentsView: View {
                 }
             }
         }
-        .onAppear {
-            loadContents()
+        // Use task(id:) which auto-cancels and re-runs when URL changes
+        // More reliable than onAppear + onChange combination
+        .task(id: url.path) {
+            await loadContentsAsync()
         }
     }
 
-    private func loadContents() {
+    private func loadContentsAsync() async {
         isLoading = true
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let contents = try FileManager.default.contentsOfDirectory(
-                    at: url,
-                    includingPropertiesForKeys: [.isDirectoryKey, .isHiddenKey],
-                    options: [.skipsHiddenFiles]
-                )
+        do {
+            let contents = try FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.isDirectoryKey, .isHiddenKey],
+                options: [.skipsHiddenFiles]
+            )
 
-                // Sort: directories first, then alphabetically
-                let sorted = contents.sorted { a, b in
-                    var aIsDir: ObjCBool = false
-                    var bIsDir: ObjCBool = false
-                    FileManager.default.fileExists(atPath: a.path, isDirectory: &aIsDir)
-                    FileManager.default.fileExists(atPath: b.path, isDirectory: &bIsDir)
+            // Sort: directories first, then alphabetically
+            let sorted = contents.sorted { a, b in
+                var aIsDir: ObjCBool = false
+                var bIsDir: ObjCBool = false
+                FileManager.default.fileExists(atPath: a.path, isDirectory: &aIsDir)
+                FileManager.default.fileExists(atPath: b.path, isDirectory: &bIsDir)
 
-                    if aIsDir.boolValue != bIsDir.boolValue {
-                        return aIsDir.boolValue
-                    }
-                    return a.lastPathComponent.localizedCaseInsensitiveCompare(
-                        b.lastPathComponent
-                    ) == .orderedAscending
+                if aIsDir.boolValue != bIsDir.boolValue {
+                    return aIsDir.boolValue
                 }
-
-                DispatchQueue.main.async {
-                    children = sorted
-                    isLoading = false
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    isLoading = false
-                }
+                return a.lastPathComponent.localizedCaseInsensitiveCompare(
+                    b.lastPathComponent
+                ) == .orderedAscending
             }
+
+            children = sorted
+            isLoading = false
+        } catch {
+            print("⚠️ Failed to load directory contents: \(error)")
+            isLoading = false
         }
     }
+
 }
 
 // MARK: - File Tree Node

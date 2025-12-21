@@ -215,6 +215,29 @@ Required:
 
 ---
 
+## 6. Documentation Voice
+
+**🟡 MEDIUM — How to write all documentation and prose.**
+
+All non-code text must follow the voice guide in `VOICE.md`. Key points:
+
+### Voice Principles
+- **Be real, not corporate** — Skip the fluff, say what you mean
+- **Be smart, not academic** — Explain complexity simply
+- **Be casual, not unprofessional** — Conversational but accurate
+- **Be helpful, not condescending** — Assume readers are smart
+
+### Quick Rules
+- Use "you" and contractions
+- Short sentences when making a point
+- No slang that ages poorly
+- Get to the point fast
+- Write like explaining to a smart friend
+
+See `/VOICE.md` for full guidelines and examples.
+
+---
+
 ## Philosophy
 
 > Write code that future maintainers will thank you for.

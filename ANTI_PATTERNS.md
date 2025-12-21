@@ -2,7 +2,7 @@
 
 > *"Lisp is worth learning for the profound enlightenment experience you will have when you finally get it; that experience will make you a better programmer for the rest of your days, even if you never actually use Lisp itself a lot."* — Eric S. Raymond
 
-LISP (1958) is the second-oldest high-level programming language still in use. It pioneered concepts that took decades to appear in mainstream languages. Understanding these concepts provides a foundation for recognizing good code in any language.
+LISP (1958) is the second-oldest high-level programming language still in use. It pioneered concepts that took decades to appear in mainstream languages. Understanding these concepts gives you a foundation for recognizing good code in any language.
 
 ---
 
@@ -30,7 +30,7 @@ LISP (1958) is the second-oldest high-level programming language still in use. I
 
 ### The Principle
 
-In LISP, the program's source code is represented as the language's fundamental data structure (lists). This property is called **homoiconicity** (from Greek: "same representation").
+In LISP, your program's source code is represented as the language's fundamental data structure (lists). This property is called **homoiconicity** (from Greek: "same representation").
 
 ```lisp
 ;; LISP code IS a list
@@ -183,7 +183,7 @@ Ask yourself:
 
 ### The Principle
 
-Functions that take functions as arguments or return functions as results are called **higher-order functions** (HOFs). They enable abstraction over control flow patterns.
+Functions that take functions as arguments or return functions as results are called **higher-order functions** (HOFs). They let you abstract over control flow patterns.
 
 ```lisp
 ;; map - apply function to each element
@@ -1423,7 +1423,7 @@ The lessons from LISP boil down to a few core ideas:
 6. **Interactive development** - Get feedback as fast as possible
 7. **Abstraction is free** - If you see a pattern, abstract it
 
-These principles, pioneered in 1958, remain as relevant as ever. They've been rediscovered and repackaged many times - in object-oriented programming, in design patterns, in functional programming - but the core insights remain the same.
+These principles, pioneered in 1958, remain as relevant as ever. They've been rediscovered and repackaged many times — in object-oriented programming, in design patterns, in functional programming — but the core insights remain the same.
 
 > *"Any sufficiently complicated C or Fortran program contains an ad hoc, informally-specified, bug-ridden, slow implementation of half of Common Lisp."* — Greenspun's Tenth Rule
 

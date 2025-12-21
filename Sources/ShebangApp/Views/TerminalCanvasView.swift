@@ -1,5 +1,5 @@
-// Copyright 2024 Shebang - Automated Development Environment
-// SPDX-License-Identifier: MIT
+// Shebang - Automated Development Environment
+// Public Domain - https://unlicense.org
 
 import SwiftUI
 
@@ -25,7 +25,8 @@ struct TerminalCanvasView: View {
                         SwiftTermView(
                             session: session,
                             onOutput: handleTerminalOutput,
-                            pendingCommand: state.terminal.pendingCommand
+                            pendingCommand: state.terminal.pendingCommand,
+                            pendingControlChar: state.terminal.pendingControlChar
                         )
 
                     case .blocks:
