@@ -12,7 +12,7 @@ This isn't a text editor with AI tacked on. It's a new paradigm: an environment 
 
 ## The Problem We're Solving
 
-Programming has accumulated 60 years of "you had to be there" knowledge:
+Programming has accumulated 60 years of hard-won wisdom:
 
 - **Shell wizardry**: `find . -name "*.js" | xargs grep -l "TODO" | head -10`
 - **Git acrobatics**: `git rebase -i HEAD~3`, `git reflog`, `git cherry-pick`
@@ -20,7 +20,15 @@ Programming has accumulated 60 years of "you had to be there" knowledge:
 - **Coding standards**: PEP 8, ESLint configs, prettier, editorconfig
 - **Deployment rituals**: Docker, Kubernetes, CI/CD pipelines, secrets management
 
-Every one of these is hard-won knowledge. Every one creates a barrier. Every one is now **automatable**.
+This isn't tribal knowledge or gatekeeping. This is **hard-fought, hard-won expertise**:
+
+- Long hours over years and years
+- A hundred books to find a few good pieces
+- Teams of pragmatic programmers asking first-principles questions
+- Mentorship chains stretching back decades
+- Battle scars from production incidents at 3am
+
+Every piece of this wisdom took someone blood and sweat to discover. And now it's **distilled into the agent**.
 
 ## What Shebang Is
 
@@ -61,7 +69,7 @@ The best interface is the one you don't think about. The command bar is a conver
 "fix the build"
 ```
 
-### 2. Terminal as Reality (Without the Gatekeeping)
+### 2. Terminal as Reality (Hard-Won Wisdom, Available Instantly)
 
 The terminal is front and center in Shebang — not hidden, not an afterthought, not "for advanced users only."
 

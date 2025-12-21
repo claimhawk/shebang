@@ -31,7 +31,7 @@ Shebang makes that knowledge infrastructure, not prerequisites.
 
 ## The Philosophy
 
-### Terminal as First-Class Citizen (Without the Gatekeeping)
+### Terminal as First-Class Citizen (Hard-Won Wisdom, Available Instantly)
 
 The terminal is front and center — not hidden, not "for advanced users only."
 
