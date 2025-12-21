@@ -1,10 +1,16 @@
-# Shebang! — Automated Development Environment
+<div align="center">
+  <img src="Assets/AppIcon.png" alt="Shebang!" width="128" height="128">
 
-**1 hour with Shebang! = 1 day for a 2020 experienced, senior developer.**
+  # Shebang!
 
-**60 years of programming knowledge, available to everyone.**
+  ### Automated Development Environment
 
-**PUBLIC DOMAIN. No strings. No corporate BS. No gatekeeping.**
+  **1 hour with Shebang! = 1 day for a 2020 experienced, senior developer.**
+
+  **60 years of programming knowledge, available to everyone.**
+
+  **PUBLIC DOMAIN. No strings. No corporate BS. No gatekeeping.**
+</div>
 
 ---
 
