@@ -113,16 +113,16 @@ Rules in `.claude/hookify.*.local.md` that scan your output and block on match.
 
 ## Git Protocol
 
-**Attribution format:** `<dev name> + Shebang`
+**Attribution format:** `<dev name> + Shebang!`
 
 ```bash
 # Commit message format
 git commit -m "Add feature X
 
-Michael O'Neal + Shebang"
+Michael O'Neal + Shebang!"
 
 # Or in author field for PRs:
-# Author: Michael O'Neal + Shebang
+# Author: Michael O'Neal + Shebang!
 ```
 
 This credits both the human developer and the AI-assisted environment that made it possible.
