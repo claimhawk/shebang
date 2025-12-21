@@ -62,6 +62,23 @@ Shebang is built using Shebang. Not as a party trick, but as a forcing function:
 
 This is the ultimate dogfooding.
 
+### Claude Code as First-Class Citizen
+
+**Claude Code** isn't an integration — it's the foundation. Shebang is built around Claude Code's agentic workflow:
+
+- Natural language commands route directly to Claude Code
+- The terminal *is* Claude Code's native environment
+- Sessions are designed for autonomous agent work
+- `system.md` configures Claude Code behavior per-project
+
+**Coming soon**: Pluggable AI backends:
+- Gemini CLI
+- GitHub Copilot CLI
+- Amazon Q
+- Custom agents via MCP
+
+Shebang is the universal frontend for agentic development.
+
 ## Quick Start
 
 ```bash

@@ -108,7 +108,26 @@ Shebang isn't an IDE with an AI assistant. It's an **agentic environment** — b
 
 The architecture assumes agents. They're not bolted on — they're first-class citizens.
 
-### 6. Built With Itself
+### 6. Claude Code as First-Class Citizen
+
+**Claude Code** is integrated at the deepest level — not as a plugin, not as an extension, but as a core execution engine:
+
+- Commands route to Claude Code when natural language is detected
+- The terminal *is* Claude Code's native environment
+- Sessions are designed around Claude Code's agentic workflow
+- The system prompt (`system.md`) configures Claude Code behavior per-project
+
+This isn't "Claude Code support." This is Claude Code **as the foundation**.
+
+**Coming soon**: Integration with other AI CLIs:
+- **Gemini CLI** — Google's agentic terminal interface
+- **GitHub Copilot CLI** — `gh copilot` commands
+- **Amazon Q** — AWS development assistant
+- **Custom agents** — Bring your own via MCP servers
+
+Shebang is the universal frontend for agentic development. The AI backend is pluggable.
+
+### 7. Built With Itself
 
 Shebang is built using Shebang. Not as a party trick, but as a constraint that forces good design:
 
