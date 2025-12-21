@@ -148,15 +148,13 @@ struct DirectoryContentsView: View {
     private func loadContentsAsync() async {
         isLoading = true
 
-        do {
-            let contents = try FileManager.default.contentsOfDirectory(
-                at: url,
-                includingPropertiesForKeys: [.isDirectoryKey, .isHiddenKey],
-                options: [.skipsHiddenFiles]
-            )
+        // Use ls command to get directory contents - ensures consistency with terminal
+        // This is more reliable than FileManager which may have permission differences
+        let result = await runLS(at: url)
 
+        if !result.isEmpty {
             // Sort: directories first, then alphabetically
-            let sorted = contents.sorted { a, b in
+            let sorted = result.sorted { a, b in
                 var aIsDir: ObjCBool = false
                 var bIsDir: ObjCBool = false
                 FileManager.default.fileExists(atPath: a.path, isDirectory: &aIsDir)
@@ -169,12 +167,54 @@ struct DirectoryContentsView: View {
                     b.lastPathComponent
                 ) == .orderedAscending
             }
-
             children = sorted
-            isLoading = false
-        } catch {
-            print("⚠️ Failed to load directory contents: \(error)")
-            isLoading = false
+        } else {
+            // Fallback to FileManager if ls fails
+            do {
+                let contents = try FileManager.default.contentsOfDirectory(
+                    at: url,
+                    includingPropertiesForKeys: [.isDirectoryKey, .isHiddenKey],
+                    options: [.skipsHiddenFiles]
+                )
+                children = contents.sorted { $0.lastPathComponent < $1.lastPathComponent }
+            } catch {
+                print("⚠️ Failed to load directory contents: \(error)")
+            }
+        }
+
+        isLoading = false
+    }
+
+    /// Run ls command to get directory contents - matches terminal behavior
+    private func runLS(at directory: URL) async -> [URL] {
+        await withCheckedContinuation { continuation in
+            let process = Process()
+            let pipe = Pipe()
+
+            process.executableURL = URL(fileURLWithPath: "/bin/ls")
+            process.arguments = ["-1", directory.path]  // One entry per line, no hidden
+            process.standardOutput = pipe
+            process.standardError = FileHandle.nullDevice
+            process.currentDirectoryURL = directory
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8) {
+                    let entries = output.split(separator: "\n")
+                        .map { String($0) }
+                        .filter { !$0.isEmpty && !$0.hasPrefix(".") }
+                        .map { directory.appendingPathComponent($0) }
+                    continuation.resume(returning: entries)
+                } else {
+                    continuation.resume(returning: [])
+                }
+            } catch {
+                print("⚠️ ls failed: \(error)")
+                continuation.resume(returning: [])
+            }
         }
     }
 

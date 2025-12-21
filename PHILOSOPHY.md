@@ -69,9 +69,38 @@ The best interface is the one you don't think about. The command bar is a conver
 "fix the build"
 ```
 
-### 2. Terminal as Reality (Hard-Won Wisdom, Available Instantly)
+### 2. Terminal as Single Source of Truth
 
-The terminal is front and center in Shebang — not hidden, not an afterthought, not "for advanced users only."
+**The terminal is the single source of truth.** Not the file system API. Not a database. Not an abstraction layer. The terminal.
+
+This is an architectural principle, not just a UI choice:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                     The Terminal                           │
+│                (Single Source of Truth)                    │
+├────────────────────────────────────────────────────────────┤
+│                          │                                 │
+│    ┌─────────────────────┼─────────────────────┐          │
+│    │                     │                     │          │
+│    ▼                     ▼                     ▼          │
+│ File Browser        Git Status          Working Dir       │
+│  (via `ls`)       (via `git`)           (via `pwd`)       │
+│    │                     │                     │          │
+│    ▼                     ▼                     ▼          │
+│   UI                    UI                    UI          │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Why this matters:**
+
+- **File browser uses `ls`** — Not FileManager, not stat(). If `ls` shows it, the browser shows it. Consistency guaranteed.
+- **Git status uses `git`** — Not libgit2, not some library. The real git binary.
+- **State derives from commands** — Every piece of UI state traces back to a terminal command.
+
+**The result:** What you see in the UI is *exactly* what you'd see if you typed the command yourself.
+
+No "well, the API says this but the terminal shows that" debugging. No permission inconsistencies. No hidden state. **One source of truth.**
 
 But here's the thing: **you don't need to know the incantations to use it.**
 
@@ -81,12 +110,60 @@ Everything flows through the terminal because:
 - **Reproducibility**: Terminal history is a log of what happened
 - **Escape hatch**: Power users can always drop down to shell
 - **AI operates here**: Agents work in the terminal, not in some abstracted API layer
+- **Consistency**: UI always matches terminal output
 
 The terminal shows you what's happening. The command bar lets you talk to it in plain English. You don't need to memorize `grep -rn "pattern" --include="*.js" | xargs sed -i 's/old/new/g'` to do find-and-replace. You just say "replace old with new in all JavaScript files."
 
 The terminal is there for those who want to see it. It's not required for those who don't.
 
-### 3. Reactive, Not Project-Rooted
+### 3. Sandboxed Shell Customization
+
+**Shebang NEVER touches your system settings.** No modifications to `~/.zshrc`, `~/.bashrc`, or any dotfiles. Ever.
+
+Instead, Shebang provides an **in-app shell layer** — aliases, functions, and environment variables that only exist inside Shebang:
+
+```swift
+// Example: Agent-created aliases that live ONLY in Shebang
+shebang.alias("gst", "git status")
+shebang.alias("gco", "git checkout")
+shebang.function("deploy", """
+    git push origin main && ssh prod 'cd /app && ./deploy.sh'
+""")
+```
+
+**Why this matters:**
+
+- **Agents can automate workflows** — The agent creates aliases and functions as it works, building up a vocabulary of shortcuts
+- **No system pollution** — Your terminal outside Shebang remains untouched
+- **Portable sessions** — Aliases travel with the session, not with the machine
+- **Safe experimentation** — Try anything without fear of breaking your shell
+
+**The adapter pattern:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Your System Shell                        │
+│                   (~/.zshrc, ~/.bashrc)                     │
+│                        UNTOUCHED                             │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │   Shebang   │
+                    │  Adapter    │
+                    │  Layer      │
+                    └──────┬──────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│                   Shebang Shell Environment                  │
+│                                                              │
+│   In-App Aliases    │   Agent Functions   │   Session Env   │
+│   (user-created)    │   (auto-generated)  │   (project)     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The agent becomes more capable as it works — learning shortcuts, building functions, creating an **environment that evolves with you**.
+
+### 4. Reactive, Not Project-Rooted
 
 Traditional IDEs anchor to a project root. Shebang follows *you*.
 
@@ -94,7 +171,7 @@ Traditional IDEs anchor to a project root. Shebang follows *you*.
 
 The environment reflects your current reality, not a config file.
 
-### 4. Knowledge Becomes Infrastructure
+### 5. Knowledge Becomes Infrastructure
 
 Every coding standard, every best practice, every "you should really..." becomes built-in behavior:
 
@@ -105,7 +182,7 @@ Every coding standard, every best practice, every "you should really..." becomes
 
 The AI has read the books. You don't have to.
 
-### 5. Agentic by Design
+### 6. Agentic by Design
 
 Shebang isn't an IDE with an AI assistant. It's an **agentic environment** — built from the ground up for AI agents to operate alongside humans:
 
@@ -116,7 +193,7 @@ Shebang isn't an IDE with an AI assistant. It's an **agentic environment** — b
 
 The architecture assumes agents. They're not bolted on — they're first-class citizens.
 
-### 6. Claude Code as First-Class Citizen
+### 7. Claude Code as First-Class Citizen
 
 **Claude Code** is integrated at the deepest level — not as a plugin, not as an extension, but as a core execution engine:
 
@@ -135,7 +212,7 @@ This isn't "Claude Code support." This is Claude Code **as the foundation**.
 
 Shebang is the universal frontend for agentic development. The AI backend is pluggable.
 
-### 7. Built With Itself
+### 8. Built With Itself
 
 Shebang is built using Shebang. Not as a party trick, but as a constraint that forces good design:
 

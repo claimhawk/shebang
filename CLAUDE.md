@@ -24,8 +24,9 @@ This is the primary instruction file for AI agents (Claude Code, Gemini CLI, etc
 ## The Contract
 
 1. **Write correct code the first time** — Use the wisdom in `agent/`
-2. **If you mess up, hooks will block you** — Read the error, fix the issue
-3. **Learn from corrections** — Don't repeat the same mistake
+2. **Always write tests** — No code ships without tests. See `agent/TESTING.md`
+3. **If you mess up, hooks will block you** — Read the error, fix the issue
+4. **Learn from corrections** — Don't repeat the same mistake
 
 The hooks enforce:
 - No secrets in code
