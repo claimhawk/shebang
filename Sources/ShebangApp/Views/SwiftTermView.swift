@@ -234,9 +234,9 @@ class ReadOnlyTerminalContainer: NSView {
 struct DefaultTheme {
     static let shared = DefaultTheme()
 
-    // Shebang dark purple theme - matches theme.yaml bgPrimary
-    let background = NSColor(red: 0.039, green: 0.039, blue: 0.078, alpha: 1.0)  // #0a0a14
-    let foreground = NSColor(red: 0.910, green: 0.910, blue: 0.941, alpha: 1.0)  // #e8e8f0
+    // VS Code-style neutral grey - matches theme.yaml bgPrimary
+    let background = NSColor(red: 0.118, green: 0.118, blue: 0.118, alpha: 1.0)  // #1e1e1e
+    let foreground = NSColor(red: 0.800, green: 0.800, blue: 0.800, alpha: 1.0)  // #cccccc
 }
 
 // MARK: - Preview

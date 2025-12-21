@@ -6,21 +6,21 @@ import SwiftUI
 extension Color {
     enum Shebang {
         // Background colors
-        static let bgPrimary = Color(red: 0.039, green: 0.039, blue: 0.078)
-        static let bgSecondary = Color(red: 0.071, green: 0.067, blue: 0.122)
-        static let bgTertiary = Color(red: 0.102, green: 0.094, blue: 0.188)
-        static let bgElevated = Color(red: 0.145, green: 0.137, blue: 0.220)
+        static let bgPrimary = Color(red: 0.118, green: 0.118, blue: 0.118)
+        static let bgSecondary = Color(red: 0.145, green: 0.145, blue: 0.149)
+        static let bgTertiary = Color(red: 0.176, green: 0.176, blue: 0.176)
+        static let bgElevated = Color(red: 0.235, green: 0.235, blue: 0.235)
 
         // Text colors
-        static let textPrimary = Color(red: 0.910, green: 0.910, blue: 0.941)
-        static let textSecondary = Color(red: 0.753, green: 0.753, blue: 0.816)
-        static let textMuted = Color(red: 0.502, green: 0.502, blue: 0.627)
-        static let textDisabled = Color(red: 0.314, green: 0.314, blue: 0.439)
+        static let textPrimary = Color(red: 0.800, green: 0.800, blue: 0.800)
+        static let textSecondary = Color(red: 0.616, green: 0.616, blue: 0.616)
+        static let textMuted = Color(red: 0.431, green: 0.431, blue: 0.431)
+        static let textDisabled = Color(red: 0.302, green: 0.302, blue: 0.302)
 
         // Accent colors
-        static let accentPrimary = Color(red: 0.655, green: 0.545, blue: 0.980)
-        static let accentLight = Color(red: 0.753, green: 0.518, blue: 0.988)
-        static let accentDark = Color(red: 0.545, green: 0.361, blue: 0.965)
+        static let accentPrimary = Color(red: 0.616, green: 0.486, blue: 0.847)
+        static let accentLight = Color(red: 0.733, green: 0.604, blue: 0.969)
+        static let accentDark = Color(red: 0.486, green: 0.361, blue: 0.749)
 
         // Semantic colors
         static let success = Color(red: 0.290, green: 0.871, blue: 0.502)

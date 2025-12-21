@@ -37,12 +37,7 @@ struct SidebarView: View {
             }
         }
         .frame(maxHeight: .infinity)
-        .background(
-            ZStack {
-                Color.Shebang.bgSecondary
-                Color.Shebang.accentPrimary.opacity(0.03)
-            }
-        )
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Header

@@ -7,25 +7,25 @@ version: 1.0.0
 
 # Core palette
 colors:
-  # Backgrounds (darkest to lightest)
+  # Backgrounds (darkest to lightest) - neutral greys
   bg:
-    primary: "#0a0a14"      # Main background
-    secondary: "#12111f"    # Cards, code blocks
-    tertiary: "#1a1830"     # Hover states
-    elevated: "#252338"     # Borders, dividers
+    primary: "#1e1e1e"      # Main background (VS Code dark)
+    secondary: "#252526"    # Cards, sidebars
+    tertiary: "#2d2d2d"     # Hover states
+    elevated: "#3c3c3c"     # Borders, dividers
 
-  # Text colors (lightest to darkest)
+  # Text colors (lightest to darkest) - neutral greys
   text:
-    primary: "#e8e8f0"      # Main text
-    secondary: "#c0c0d0"    # Subtitles
-    muted: "#8080a0"        # Hints, placeholders
-    disabled: "#505070"     # Disabled text
+    primary: "#cccccc"      # Main text
+    secondary: "#9d9d9d"    # Subtitles
+    muted: "#6e6e6e"        # Hints, placeholders
+    disabled: "#4d4d4d"     # Disabled text
 
-  # Accent colors
+  # Accent colors - subtle purple for highlights only
   accent:
-    primary: "#a78bfa"      # Primary purple
-    light: "#c084fc"        # Lighter purple
-    dark: "#8b5cf6"         # Darker purple
+    primary: "#9d7cd8"      # Muted purple accent
+    light: "#bb9af7"        # Lighter purple
+    dark: "#7c5cbf"         # Darker purple
 
   # Semantic colors
   semantic:

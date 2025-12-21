@@ -130,19 +130,20 @@ struct CommandBarView: View {
             }
             .padding(.leading, 14)
             .padding(.trailing, 6)
-            .padding(.vertical, 10)
-            .background(Color.Shebang.bgTertiary)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.05))
             .overlay(
-                Rectangle()
+                RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(
-                        isFocused ? Color.Shebang.accentPrimary : Color.Shebang.bgElevated,
+                        isFocused ? Color.Shebang.accentPrimary.opacity(0.5) : Color.white.opacity(0.1),
                         lineWidth: 1
                     )
             )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.Shebang.bgSecondary)
+        .background(.ultraThinMaterial)
         .overlay(alignment: .topLeading) {
             // Completion popup
             if showCompletions && !completions.isEmpty {
