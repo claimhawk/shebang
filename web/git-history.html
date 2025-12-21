@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shebang! Git History</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --purple: #a371f7;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            z-index: 100;
+        }
+        .logo { font-size: 20px; font-weight: 600; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .nav { display: flex; gap: 24px; justify-content: center; }
+        .header-right { display: flex; justify-content: flex-end; }
+        .nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .nav a:hover { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
+        .nav a.active { color: var(--accent); background: rgba(88, 166, 255, 0.15); }
+        .timeline {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .commit {
+            position: relative;
+            padding-left: 32px;
+            padding-bottom: 32px;
+            border-left: 2px solid var(--border);
+            margin-left: 8px;
+        }
+        .commit:last-child { border-left-color: transparent; }
+        .commit::before {
+            content: "";
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--bg);
+        }
+        .commit-header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .commit-hash {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            color: var(--accent);
+            background: rgba(88, 166, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .commit-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .commit-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .commit-body {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .commit-section {
+            margin-bottom: 16px;
+        }
+        .commit-section:last-child { margin-bottom: 0; }
+        .commit-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--purple);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .commit-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .commit-section li {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        .commit-section li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+        .commit-section p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .philosophy-tag {
+            display: inline-block;
+            font-size: 11px;
+            background: rgba(163, 113, 247, 0.15);
+            color: var(--purple);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            margin-right: 4px;
+        }
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .stat {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .stat-add { color: var(--success); }
+        .stat-del { color: #f85149; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo"><span>#!</span> Shebang!</a>
+        <nav class="nav">
+            <a href="/">Dashboard</a>
+            <a href="/features">Features</a>
+            <a href="/git-history" class="active">Git History</a>
+            <a href="/docs">Docs</a>
+            <a href="/docs/ROADMAP.md">Roadmap</a>
+        </nav>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="timeline" id="commits">
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">9a0f6b0</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Add reconcile-history.sh: AI-powered git history documentation</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>424-line bash script for AI-enriched commit messages</li>
+                        <li>Uses Claude CLI with --print flag for non-interactive operation</li>
+                        <li>Operates in isolated git worktree, keeping main untouched</li>
+                        <li>Preserves original author/committer timestamps</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Transform repository history into living documentation by having Claude analyze each diff and explain its strategic significance.</p>
+                </div>
+                <div class="philosophy-tag">Terminal as Single Source of Truth</div>
+                <div class="philosophy-tag">Built With Itself</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+428</span> lines</span>
+                    <span class="stat">2 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">bddf430</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Terminal as Single Source of Truth + comprehensive testing docs</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>Core architectural principle: terminal is ground truth for all state</li>
+                        <li>Sandboxed Shell Customization philosophy section</li>
+                        <li>3000+ lines of testing documentation</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>The terminal is the ground truth - not abstractions, not databases. Codifies philosophy and testing standards.</p>
+                </div>
+                <div class="philosophy-tag">Terminal as Single Source of Truth</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+3200</span> lines</span>
+                    <span class="stat">5 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">884bbb0</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Reorganize: agent/ folder for all AI knowledge files</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>All AI-facing documentation moved to agent/ folder</li>
+                        <li>Consolidated anti-patterns, best practices, code quality, voice</li>
+                        <li>Examples and templates under agent/</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Clear separation between human-facing docs and agent-facing knowledge. The agent/ folder is the single location for AI operational context.</p>
+                </div>
+                <div class="philosophy-tag">Knowledge Becomes Infrastructure</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+461</span> <span class="stat-del">-37</span></span>
+                    <span class="stat">26 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">1efcc32</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Swift Package Manager layout + public domain release</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>Restructured from ShebangApp/ to Sources/ShebangApp/</li>
+                        <li>Added PHILOSOPHY.md, VOICE.md documentation</li>
+                        <li>MkDocs documentation infrastructure</li>
+                        <li>Changed license to The Unlicense (public domain)</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Standard SPM layout for better tooling. Public domain maximizes adoption.</p>
+                </div>
+                <div class="philosophy-tag">The Interface Gets Out of Your Way</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+4049</span> <span class="stat-del">-841</span></span>
+                    <span class="stat">39 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">dbdc0a6</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Add Shebang IDE macOS application</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>2878 lines of Swift/SwiftUI</li>
+                        <li>Three-panel layout: file browser, terminal, sessions</li>
+                        <li>SwiftTerm integration for terminal emulation</li>
+                        <li>Command bar with git-aware prompt</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Native macOS development environment embodying the "Terminal as Single Source of Truth" philosophy.</p>
+                </div>
+                <div class="philosophy-tag">Agentic by Design</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+2878</span></span>
+                    <span class="stat">10 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">e0281df</span>
+                <span class="commit-date">Dec 21, 2025</span>
+            </div>
+            <div class="commit-title">Rebrand to Shebang! - Automated Development Environment</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>Renamed from Claude Code Starter to Shebang!</li>
+                        <li>Updated branding across README and CLAUDE.md</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Shebang (#!) represents the Unix tradition of executable scripts - fitting for a terminal-first environment.</p>
+                </div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+9</span> <span class="stat-del">-6</span></span>
+                    <span class="stat">2 files</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="commit">
+            <div class="commit-header">
+                <span class="commit-hash">3aa1761</span>
+                <span class="commit-date">Dec 18, 2025</span>
+            </div>
+            <div class="commit-title">Initial commit: guardrails + templates</div>
+            <div class="commit-body">
+                <div class="commit-section">
+                    <h3>What Changed</h3>
+                    <ul>
+                        <li>Initial project structure with guardrails system</li>
+                        <li>PreToolUse hooks for secret detection, command validation</li>
+                        <li>PostToolUse hooks for auto-formatting</li>
+                        <li>Python example project with tests</li>
+                    </ul>
+                </div>
+                <div class="commit-section">
+                    <h3>Why</h3>
+                    <p>Foundation for AI-assisted development with production-grade guardrails from day one.</p>
+                </div>
+                <div class="philosophy-tag">Knowledge Becomes Infrastructure</div>
+                <div class="stats">
+                    <span class="stat"><span class="stat-add">+2704</span></span>
+                    <span class="stat">31 files</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+{
+  "lastUpdated": "2025-12-21T16:57:51.360706",
+  "columns": [
+    {
+      "id": "backlog",
+      "name": "BACKLOG",
+      "color": "accent",
+      "tasks": [
+        {
+          "id": "velocity-ui",
+          "title": "Velocity tracking UI",
+          "description": "Real-time velocity charts from git history. Show lines/hour, commits/day, productivity trends.",
+          "category": "feature",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "aliases",
+          "title": "In-app aliases/functions",
+          "description": "Sandboxed shell customization. User and agent-created shortcuts that never touch system dotfiles.",
+          "category": "feature",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "ai-backends",
+          "title": "Pluggable AI backends",
+          "description": "Support for Gemini CLI, GitHub Copilot CLI, Amazon Q, and custom MCP agents.",
+          "category": "core",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "nl-git",
+          "title": "Natural language git",
+          "description": "Translate commands like 'undo that' to smart reset/revert/checkout operations.",
+          "category": "feature",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "visual-git",
+          "title": "Visual git status",
+          "description": "Inline diff preview, branch graph visualization, stash management UI.",
+          "category": "feature",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "cross-platform",
+          "title": "Linux/Windows support",
+          "description": "Native GTK/Qt UI for Linux, WinUI for Windows with PowerShell and WSL2 support.",
+          "category": "platform",
+          "created": "2025-12-21T10:00:00Z"
+        },
+        {
+          "id": "task-20251221165456",
+          "title": "Stripe payment integration",
+          "description": "Add Stripe support for premium features, team subscriptions, and marketplace transactions. Include webhook handling, subscription management, and usage-based billing.",
+          "category": "feature",
+          "created": "2025-12-21T16:54:56.818881"
+        }
+      ]
+    },
+    {
+      "id": "in_progress",
+      "name": "IN PROGRESS",
+      "color": "warning",
+      "tasks": [
+        {
+          "id": "agent-folders",
+          "title": "Agent folders design",
+          "description": "Specialized Claude Code contexts with job-specific data. GOAL.md, RESEARCH.md, PLAN.md, TODO.md, DONE.md, CONTEXT.md, COMMS/, session/.",
+          "category": "core",
+          "agent": "add8d9f",
+          "created": "2025-12-21T14:00:00Z",
+          "artifact": "/docs/design/AGENTS.md"
+        },
+        {
+          "id": "whitepaper",
+          "title": "Complexity Collapse whitepaper",
+          "description": "Research paper on how AI commoditizes specialized expertise. The 10x inversion - 1 developer + AI = 10 developers.",
+          "category": "research",
+          "created": "2025-12-21T15:00:00Z",
+          "artifact": "/docs/research/PAPERS.md"
+        },
+        {
+          "id": "marketing",
+          "title": "Marketing website",
+          "description": "Sales website to drive GitHub forks. Hero section, problem/solution, proof, features grid, CTA.",
+          "category": "docs",
+          "created": "2025-12-21T16:30:00Z"
+        },
+        {
+          "id": "screenshots",
+          "title": "Screenshot automation",
+          "description": "Browser automation to capture all portal pages for marketing materials.",
+          "category": "docs",
+          "created": "2025-12-21T16:35:00Z"
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "name": "REVIEW",
+      "color": "purple",
+      "tasks": [
+        {
+          "id": "readme-update",
+          "title": "README fork-and-go update",
+          "description": "Getting Started section with 3 commands. Feature table. Production-ready in 60 seconds.",
+          "category": "docs",
+          "created": "2025-12-21T16:20:00Z",
+          "artifact": "/docs/README.md"
+        }
+      ]
+    },
+    {
+      "id": "done",
+      "name": "DONE",
+      "color": "success",
+      "tasks": [
+        {
+          "id": "git-reconcile",
+          "title": "Git history reconciliation",
+          "description": "AI-powered commit message enrichment. 23/23 commits processed with architect-level explanations.",
+          "meta": "23/23",
+          "category": "feature",
+          "commit": "9a0f6b0",
+          "completed": "2025-12-21T16:05:00Z"
+        },
+        {
+          "id": "roadmap",
+          "title": "ROADMAP.md",
+          "description": "5-phase development plan with feature dependencies, success metrics, and contributing guidelines.",
+          "meta": "530 lines",
+          "category": "docs",
+          "completed": "2025-12-21T16:30:00Z"
+        },
+        {
+          "id": "features",
+          "title": "FEATURES.md",
+          "description": "Master inventory of all 145 features with git history, status tracking, and commit timeline.",
+          "meta": "470 lines",
+          "category": "docs",
+          "completed": "2025-12-21T16:30:00Z"
+        },
+        {
+          "id": "agents-design",
+          "title": "AGENTS.md design",
+          "description": "Comprehensive design document for folder-based agent contexts. Hierarchical wizard/specialist model.",
+          "meta": "1200+ lines",
+          "category": "docs",
+          "completed": "2025-12-21T15:30:00Z"
+        },
+        {
+          "id": "research-folder",
+          "title": "Research papers folder",
+          "description": "docs/research/ with PAPERS.md (whitepaper topics) and PROGRESS.md (kanban tracking).",
+          "category": "docs",
+          "completed": "2025-12-21T15:00:00Z"
+        },
+        {
+          "id": "philosophy",
+          "title": "Philosophy docs",
+          "description": "8 core principles including Terminal as Single Source of Truth and Sandboxed Shell Customization.",
+          "category": "docs",
+          "completed": "2025-12-21T14:00:00Z"
+        },
+        {
+          "id": "testing-docs",
+          "title": "Testing documentation",
+          "description": "Comprehensive testing best practices, anti-patterns, and language-specific guides.",
+          "meta": "3000+ lines",
+          "category": "docs",
+          "completed": "2025-12-21T15:57:00Z"
+        },
+        {
+          "id": "guardrails",
+          "title": "Guardrails system",
+          "description": "PreToolUse/PostToolUse hooks for secrets, commands, quality, and anti-patterns.",
+          "meta": "10 validators",
+          "category": "core",
+          "completed": "2025-12-18T14:03:00Z"
+        },
+        {
+          "id": "hookify",
+          "title": "Hookify rules",
+          "description": "Content-based blocking for .env files, secrets, passwords, silent exceptions, any types, junk drawers.",
+          "meta": "10 blockers",
+          "category": "core",
+          "completed": "2025-12-21T10:29:00Z"
+        },
+        {
+          "id": "macos-app",
+          "title": "macOS app",
+          "description": "Native Swift/SwiftUI development environment with three-panel layout and SwiftTerm integration.",
+          "meta": "2878 lines Swift",
+          "category": "feature",
+          "completed": "2025-12-21T14:28:00Z"
+        },
+        {
+          "id": "web-portal",
+          "title": "Web portal consolidation",
+          "description": "Unified server at localhost:8080 with dashboard, git history, and markdown docs rendering.",
+          "category": "feature",
+          "created": "2025-12-21T16:00:00Z"
+        },
+        {
+          "id": "presentation",
+          "title": "Presentation strategy doc",
+          "description": "Agent memory for organizing the 'wow' - target audiences, hooks, story arc, visual style.",
+          "category": "docs",
+          "created": "2025-12-21T16:40:00Z",
+          "artifact": "/docs/marketing/PRESENTATION.md"
+        }
+      ]
+    }
+  ]
+}

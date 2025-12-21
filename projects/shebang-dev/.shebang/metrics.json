@@ -1,0 +1,23 @@
+{
+  "lastUpdated": "2025-12-21T16:45:00Z",
+  "productivity": {
+    "multiplier": 8,
+    "linesPerHour": 185,
+    "baseline": 20
+  },
+  "codebase": {
+    "totalLines": 13664,
+    "commits": 23,
+    "features": {
+      "completed": 110,
+      "inProgress": 8,
+      "planned": 27,
+      "total": 145
+    }
+  },
+  "timeline": {
+    "startDate": "2025-12-18T14:03:00Z",
+    "activeHours": 8,
+    "calendarHours": 73.6
+  }
+}

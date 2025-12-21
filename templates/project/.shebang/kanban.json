@@ -1,0 +1,29 @@
+{
+  "lastUpdated": "",
+  "columns": [
+    {
+      "id": "backlog",
+      "name": "BACKLOG",
+      "color": "accent",
+      "tasks": []
+    },
+    {
+      "id": "in_progress",
+      "name": "IN PROGRESS",
+      "color": "warning",
+      "tasks": []
+    },
+    {
+      "id": "review",
+      "name": "REVIEW",
+      "color": "purple",
+      "tasks": []
+    },
+    {
+      "id": "done",
+      "name": "DONE",
+      "color": "success",
+      "tasks": []
+    }
+  ]
+}

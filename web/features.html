@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shebang! Features - Everything You Get</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --purple: #a371f7;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            z-index: 100;
+        }
+        .logo { font-size: 20px; font-weight: 600; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .nav { display: flex; gap: 24px; justify-content: center; }
+        .nav a { color: var(--text-muted); text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; }
+        .nav a:hover { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
+        .nav a.active { color: var(--accent); background: rgba(88, 166, 255, 0.15); }
+        .header-right { display: flex; justify-content: flex-end; }
+
+        .hero {
+            text-align: center;
+            padding: 80px 24px;
+            background: linear-gradient(180deg, rgba(88,166,255,0.05) 0%, transparent 100%);
+        }
+        .hero h1 { font-size: 48px; margin-bottom: 16px; }
+        .hero h1 span { color: var(--accent); }
+        .hero p { font-size: 20px; color: var(--text-muted); max-width: 600px; margin: 0 auto 32px; }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 40px;
+        }
+        .stat { text-align: center; }
+        .stat-value { font-size: 48px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 14px; color: var(--text-muted); }
+
+        .section { padding: 80px 24px; max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 48px; }
+        .section-header h2 { font-size: 32px; margin-bottom: 12px; }
+        .section-header p { color: var(--text-muted); }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .feature-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .premium-banner {
+            background: linear-gradient(135deg, var(--card) 0%, rgba(163, 113, 247, 0.1) 100%);
+            border: 1px solid var(--purple);
+            border-radius: 16px;
+            padding: 48px;
+            text-align: center;
+            margin: 48px 0;
+        }
+        .premium-banner h3 {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+        .premium-banner .price {
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--success);
+            margin: 24px 0;
+        }
+        .premium-banner .price span {
+            font-size: 24px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-left: 12px;
+        }
+        .premium-banner p {
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto 24px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 48px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .cta-button:hover { opacity: 0.9; }
+
+        .comparison {
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .comparison-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.3);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .comparison-row:last-child { border-bottom: none; }
+        .check { color: var(--success); font-weight: bold; }
+        .cross { color: var(--text-muted); }
+
+        .testimonial {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 24px 0;
+        }
+        .testimonial-text {
+            font-size: 18px;
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+        .testimonial-author {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo"><span>#!</span> Shebang!</a>
+        <nav class="nav">
+            <a href="/">Dashboard</a>
+            <a href="/features" class="active">Features</a>
+            <a href="/git-history">Git History</a>
+            <a href="/docs">Docs</a>
+            <a href="/docs/ROADMAP.md">Roadmap</a>
+        </nav>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="hero">
+        <h1>Everything a <span>$2,000/month</span><br>enterprise tool gives you.</h1>
+        <p>Production-grade development environment with guardrails, agent protocols, and AI-first architecture. Built by a 30-year practitioner.</p>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">145</div>
+                <div class="stat-label">Features</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">8x</div>
+                <div class="stat-label">Productivity</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">13.6K</div>
+                <div class="stat-label">Lines of Code</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">$0</div>
+                <div class="stat-label">Cost</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Core Platform</h2>
+            <p>The foundation that makes everything else possible.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">Guardrails System</div>
+                <div class="feature-desc">10 validators that block secrets, dangerous commands, and anti-patterns before they happen. Not after.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Hookify Rules</div>
+                <div class="feature-desc">Content-based blocking. Silent exceptions, any types, junk drawer directories - caught automatically.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">Agent Protocol</div>
+                <div class="feature-desc">Claude Code configured out of the box. system.md and CLAUDE.md templates for any project.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Live Dashboard</div>
+                <div class="feature-desc">Kanban board, project metrics, git history, docs - all in one localhost portal.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧪</div>
+                <div class="feature-title">Testing Docs</div>
+                <div class="feature-desc">3,000+ lines of testing best practices, anti-patterns, and language-specific guides.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🖥️</div>
+                <div class="feature-title">Native App</div>
+                <div class="feature-desc">macOS development environment built in Swift/SwiftUI. Terminal-first design.</div>
+                <span class="feature-tag">INCLUDED</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="premium-banner">
+            <h3>The Complexity Barrier Has Collapsed</h3>
+            <div class="price">FREE <span>$2,000/mo</span></div>
+            <p>What enterprise teams pay thousands for monthly, you get for free. Forever. Public domain. No strings.</p>
+            <a href="https://github.com/MichaelONeal/Shebang" class="cta-button">Fork on GitHub</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Compare to Enterprise</h2>
+            <p>See what you're getting for free.</p>
+        </div>
+        <div class="comparison">
+            <div class="comparison-header">
+                <div>Feature</div>
+                <div style="text-align: center;">Shebang!</div>
+                <div style="text-align: center;">Enterprise ($2K/mo)</div>
+            </div>
+            <div class="comparison-row">
+                <div>Secret detection & blocking</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="check" style="text-align: center;">✓</div>
+            </div>
+            <div class="comparison-row">
+                <div>Code quality automation</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="check" style="text-align: center;">✓</div>
+            </div>
+            <div class="comparison-row">
+                <div>AI agent protocols</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="cross" style="text-align: center;">—</div>
+            </div>
+            <div class="comparison-row">
+                <div>Live development dashboard</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="check" style="text-align: center;">✓</div>
+            </div>
+            <div class="comparison-row">
+                <div>Native macOS app</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="cross" style="text-align: center;">—</div>
+            </div>
+            <div class="comparison-row">
+                <div>Public domain license</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="cross" style="text-align: center;">—</div>
+            </div>
+            <div class="comparison-row">
+                <div>Self-hostable</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="cross" style="text-align: center;">—</div>
+            </div>
+            <div class="comparison-row">
+                <div>No vendor lock-in</div>
+                <div class="check" style="text-align: center;">✓</div>
+                <div class="cross" style="text-align: center;">—</div>
+            </div>
+            <div class="comparison-row" style="background: rgba(63, 185, 80, 0.1);">
+                <div style="font-weight: 600;">Price</div>
+                <div class="check" style="text-align: center; font-weight: 600;">$0/forever</div>
+                <div style="text-align: center; color: var(--warning);">$24,000/year</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>What Developers Are Saying</h2>
+        </div>
+        <div class="testimonial">
+            <div class="testimonial-text">"Built with itself. Every pain point we hit, we fix immediately. This is what happens when practitioners build tools for practitioners."</div>
+            <div class="testimonial-author">— Michael O'Neal, Creator</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Ready in 60 Seconds</h2>
+            <p>Three commands. That's it.</p>
+        </div>
+        <div style="background: var(--card); border-radius: 12px; padding: 32px; font-family: 'SF Mono', Monaco, monospace;">
+            <div style="color: var(--text-muted); margin-bottom: 8px;"># 1. Clone</div>
+            <div style="margin-bottom: 16px;">git clone https://github.com/MichaelONeal/Shebang.git && cd Shebang</div>
+            <div style="color: var(--text-muted); margin-bottom: 8px;"># 2. Install</div>
+            <div style="margin-bottom: 16px;">pip install pyyaml ruff mypy radon</div>
+            <div style="color: var(--text-muted); margin-bottom: 8px;"># 3. Launch</div>
+            <div>python3 web/server.py</div>
+        </div>
+        <div style="text-align: center; margin-top: 32px;">
+            <a href="https://github.com/MichaelONeal/Shebang" class="cta-button">Start Building</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>PUBLIC DOMAIN</strong> — <a href="https://github.com/MichaelONeal/Shebang/blob/main/LICENSE">The Unlicense</a></p>
+        <p style="margin-top: 8px;">Built by practitioners, for practitioners. No gatekeeping. No barriers.</p>
+    </div>
+</body>
+</html>

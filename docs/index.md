@@ -1,6 +1,6 @@
 # Shebang! — Automated Development Environment
 
-**1 hour with Shebang! = 1 day for a 2020 developer.**
+**1 hour with Shebang! = 1 day for a 2020 experienced, senior developer.**
 
 **60 years of programming knowledge, available to everyone.**
 

@@ -1,10 +1,60 @@
 # Shebang! — Automated Development Environment
 
-**1 hour with Shebang! = 1 day for a 2020 developer.**
+**1 hour with Shebang! = 1 day for a 2020 experienced, senior developer.**
 
 **60 years of programming knowledge, available to everyone.**
 
 **PUBLIC DOMAIN. No strings. No corporate BS. No gatekeeping.**
+
+---
+
+## Getting Started (Fork-and-Go)
+
+**Fork this repo and you get the entire production-grade development environment:**
+
+```bash
+# 1. Fork and clone
+git clone https://github.com/YOUR_USERNAME/Shebang.git
+cd Shebang
+
+# 2. Install Python dependencies (for guardrails)
+pip install pyyaml ruff mypy radon
+
+# 3. Start the development portal (opens in browser automatically)
+python3 web/server.py
+```
+
+**That's it.** The development portal opens at http://localhost:8080 with:
+- Live dashboard with project metrics
+- Multi-project support (manage multiple codebases from one install)
+- Git history with AI-enriched commit explanations
+- All documentation rendered as web pages
+- Roadmap, features, and progress tracking
+
+### What You Get Immediately
+
+| Feature | Description |
+|---------|-------------|
+| **Guardrails** | PreToolUse/PostToolUse hooks that enforce code quality, block secrets, validate commands |
+| **Hookify Rules** | Content-based blocking for anti-patterns, silent exceptions, junk drawer directories |
+| **Agent Protocol** | `system.md` and `CLAUDE.md` templates for configuring Claude Code |
+| **Dev Portal** | localhost:8080 dashboard with kanban, git history, docs, metrics |
+| **Code Quality** | Python (ruff, mypy, radon) and TypeScript (ESLint, Prettier) enforcement |
+| **Testing Docs** | 3000+ lines of testing best practices, anti-patterns, language guides |
+| **macOS App** | Native Swift/SwiftUI development environment (optional, requires Xcode 16+) |
+
+### Run the Quality Checks
+
+```bash
+# Python quality checks
+./scripts/pre-commit.sh
+
+# Security sweep for secrets
+./scripts/security-sweep.sh
+
+# TypeScript checks (if using TS)
+./scripts/pre-commit-ts.sh
+```
 
 ---
 

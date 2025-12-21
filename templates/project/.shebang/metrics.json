@@ -1,0 +1,23 @@
+{
+  "lastUpdated": "",
+  "productivity": {
+    "multiplier": 0,
+    "linesPerHour": 0,
+    "baseline": 20
+  },
+  "codebase": {
+    "totalLines": 0,
+    "commits": 0,
+    "features": {
+      "completed": 0,
+      "inProgress": 0,
+      "planned": 0,
+      "total": 0
+    }
+  },
+  "timeline": {
+    "startDate": "",
+    "activeHours": 0,
+    "calendarHours": 0
+  }
+}

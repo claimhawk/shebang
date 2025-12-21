@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Shebang! Development Portal</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --purple: #a371f7;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: grid;
+            grid-template-columns: auto auto 1fr auto;
+            gap: 24px;
+            align-items: center;
+            z-index: 100;
+        }
+        .logo { font-size: 20px; font-weight: 600; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .project-controls { display: flex; align-items: center; gap: 12px; }
+        .project-selector {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        .project-selector:focus { outline: none; border-color: var(--accent); }
+        .btn-new-project {
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-new-project:hover { opacity: 0.9; }
+        .nav { display: flex; gap: 24px; justify-content: center; }
+        .header-right { display: flex; justify-content: flex-end; }
+        .nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .nav a:hover { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
+        .nav a.active { color: var(--accent); background: rgba(88, 166, 255, 0.15); }
+        .status { font-size: 12px; color: var(--text-muted); }
+        .status::before { content: "●"; color: var(--success); margin-right: 6px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 16px;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .card h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .task {
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .task:last-child { margin-bottom: 0; }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .task-title { font-weight: 500; font-size: 14px; }
+        .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .badge-progress { background: rgba(88, 166, 255, 0.2); color: var(--accent); }
+        .badge-complete { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .badge-pending { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
+        .badge-core { background: rgba(163, 113, 247, 0.2); color: var(--purple); }
+        .task-desc { font-size: 12px; color: var(--text-muted); }
+        .feature-list { list-style: none; }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .feature-list li:last-child { border-bottom: none; }
+        .commit-hash {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            color: var(--accent);
+            margin-right: 8px;
+        }
+        .roadmap-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .roadmap-item:last-child { border-bottom: none; }
+        .roadmap-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .roadmap-icon.done { background: var(--success); }
+        .roadmap-content { flex: 1; }
+        .roadmap-title { font-size: 13px; font-weight: 500; }
+        .roadmap-meta { font-size: 11px; color: var(--text-muted); }
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .kanban-col { min-height: 200px; }
+        .kanban-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 8px;
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .kanban-card {
+            background: var(--bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            border-left: 3px solid var(--accent);
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .kanban-card:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .kanban-card.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        .kanban-col.drag-over {
+            background: rgba(88, 166, 255, 0.1);
+            border-radius: 6px;
+        }
+        .kanban-col.drag-over .kanban-header {
+            color: var(--accent);
+        }
+        .kanban-card .agent-badge {
+            display: inline-block;
+            font-size: 9px;
+            background: var(--purple);
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: var(--text); }
+        .modal-body { padding: 20px; }
+        .modal-field { margin-bottom: 16px; }
+        .modal-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .modal-value { font-size: 14px; }
+        .modal-actions {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn-success { background: var(--success); color: white; }
+        .btn:hover { opacity: 0.9; }
+        /* Add task form */
+        .add-task-btn {
+            width: 100%;
+            padding: 8px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .add-task-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+        }
+        .input:focus { outline: none; border-color: var(--accent); }
+        .textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            min-height: 80px;
+            resize: vertical;
+        }
+        .papers { font-size: 12px; }
+        .paper-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .paper-title { font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+        .paper-thesis { color: var(--text-muted); font-style: italic; }
+        .quick-start {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
+            border: 1px solid var(--accent);
+        }
+        .quick-start h2 { color: var(--accent); }
+        .command {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            margin: 8px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .metric {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .links-list { list-style: none; }
+        .links-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .links-list li:last-child { border-bottom: none; }
+        .links-list a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .links-list a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo"><span>#!</span> Shebang!</a>
+        <div class="project-controls">
+            <select id="project-selector" class="project-selector">
+                <option value="">Loading projects...</option>
+            </select>
+            <button class="btn-new-project" onclick="showNewProjectModal()">+ New Project</button>
+        </div>
+        <nav class="nav">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/features">Features</a>
+            <a href="/git-history">Git History</a>
+            <a href="/docs">Docs</a>
+            <a href="/docs/ROADMAP.md">Roadmap</a>
+        </nav>
+        <div class="header-right">
+            <div class="status">Live</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card quick-start">
+            <h2>Quick Start</h2>
+            <p style="font-size: 13px; margin-bottom: 12px;">Fork this repo and start building with production-grade guardrails.</p>
+            <div class="command">git clone &lt;your-fork&gt; && cd shebang</div>
+            <div class="command">pip install pyyaml ruff mypy radon</div>
+            <div class="command">python3 web/server.py</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 12px;">Then open <a href="http://localhost:8080" style="color: var(--accent);">http://localhost:8080</a></p>
+        </div>
+
+        <div class="card">
+            <h2>Project Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">8x</div>
+                    <div class="metric-label">Productivity</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">110</div>
+                    <div class="metric-label">Features Done</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">13.6K</div>
+                    <div class="metric-label">Lines of Code</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">23</div>
+                    <div class="metric-label">Commits</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Active Development</h2>
+            <div class="task">
+                <div class="task-header">
+                    <span class="task-title">Agent Folders System</span>
+                    <span class="badge badge-progress">DESIGNING</span>
+                </div>
+                <div class="task-desc">Specialized Claude Code contexts with job-specific data</div>
+            </div>
+            <div class="task">
+                <div class="task-header">
+                    <span class="task-title">Research Papers</span>
+                    <span class="badge badge-progress">RESEARCHING</span>
+                </div>
+                <div class="task-desc">The Complexity Collapse whitepaper</div>
+            </div>
+            <div class="task">
+                <div class="task-header">
+                    <span class="task-title">Git History Reconciliation</span>
+                    <span class="badge badge-complete">COMPLETE</span>
+                </div>
+                <div class="task-desc">23/23 commits enriched with AI explanations</div>
+            </div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>Kanban Board <span id="kanban-updated" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></h2>
+            <div id="kanban-board" class="kanban" style="grid-template-columns: repeat(4, 1fr);">
+                <!-- Loaded from data/kanban.json -->
+            </div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>What You Get</h2>
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;">
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🛡️</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Guardrails</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Secrets blocked. Commands validated. Quality enforced.</div>
+                </div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">⚡</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Instant Setup</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Clone. Install. Run. Production-ready in 60 seconds.</div>
+                </div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🤖</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Agent Protocol</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Claude Code configured. Multi-agent ready.</div>
+                </div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Live Dashboard</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Kanban. Metrics. Git history. All in one place.</div>
+                </div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🧪</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Testing Docs</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">3000+ lines of best practices. Anti-patterns documented.</div>
+                </div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🖥️</div>
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Native App</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">macOS. Swift/SwiftUI. Terminal-first design.</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 24px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                <a href="/docs/ROADMAP.md" style="color: var(--accent); font-size: 12px; text-decoration: none;">Roadmap →</a>
+                <a href="/docs/FEATURES.md" style="color: var(--accent); font-size: 12px; text-decoration: none;">All 145 Features →</a>
+                <a href="/docs/PHILOSOPHY.md" style="color: var(--accent); font-size: 12px; text-decoration: none;">Philosophy →</a>
+                <a href="/docs" style="color: var(--accent); font-size: 12px; text-decoration: none;">Full Docs →</a>
+            </div>
+        </div>
+
+        <div class="card" style="grid-column: span 2;">
+            <h2>Research Papers</h2>
+            <div class="papers">
+                <div class="paper-item">
+                    <div class="paper-title">The Complexity Collapse</div>
+                    <div class="paper-thesis">"What experts spent decades learning to covet is now a commodity. The complexity barrier has collapsed."</div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-title">Git as Ground Truth</div>
+                    <div class="paper-thesis">"Eliminating manual reporting through automated atomic commits and real-time velocity analysis."</div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-title">The Guardrails Hypothesis</div>
+                    <div class="paper-thesis">"60 years of hard-won wisdom encoded in milliseconds of validation."</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">Task Details</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-actions" id="modal-actions">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="add-task-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Add New Task</span>
+                <button class="modal-close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <div class="modal-label">Title</div>
+                    <input type="text" id="new-task-title" class="input" placeholder="Task title...">
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Description</div>
+                    <textarea id="new-task-desc" class="textarea" placeholder="What needs to be done..."></textarea>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Category</div>
+                    <select id="new-task-category" class="input">
+                        <option value="feature">Feature</option>
+                        <option value="core">Core</option>
+                        <option value="docs">Documentation</option>
+                        <option value="research">Research</option>
+                        <option value="platform">Platform</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitNewTask()">Add to Backlog</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="new-project-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Create New Project</span>
+                <button class="modal-close" onclick="closeNewProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <div class="modal-label">Project Name</div>
+                    <input type="text" id="new-project-name" class="input" placeholder="My Awesome Project">
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Description</div>
+                    <textarea id="new-project-desc" class="textarea" placeholder="Brief description of what this project is about..."></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitNewProject()">Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const colorMap = {
+            'accent': 'var(--accent)',
+            'success': 'var(--success)',
+            'warning': 'var(--warning)',
+            'purple': 'var(--purple)'
+        };
+
+        let kanbanData = null;
+        let currentTask = null;
+        let currentColumn = null;
+
+        function createKanbanCard(task, color, columnId) {
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.style.borderLeftColor = color;
+            card.dataset.taskId = task.id;
+            card.dataset.columnId = columnId;
+            card.draggable = true;
+            card.onclick = function() { showTaskModal(task, columnId); };
+
+            // Drag events
+            card.ondragstart = function(e) {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    taskId: task.id,
+                    fromColumn: columnId
+                }));
+                card.classList.add('dragging');
+            };
+            card.ondragend = function() {
+                card.classList.remove('dragging');
+            };
+
+            const title = document.createTextNode(task.title);
+            card.appendChild(title);
+
+            if (task.agent) {
+                const badge = document.createElement('span');
+                badge.className = 'agent-badge';
+                badge.textContent = 'AGENT';
+                card.appendChild(badge);
+            }
+
+            if (task.meta) {
+                const meta = document.createElement('span');
+                meta.style.cssText = 'color: var(--text-muted); font-size: 10px; margin-left: 4px;';
+                meta.textContent = '(' + task.meta + ')';
+                card.appendChild(meta);
+            }
+            return card;
+        }
+
+        function createKanbanColumn(col) {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'kanban-col';
+            colDiv.dataset.columnId = col.id;
+
+            // Drop zone events
+            colDiv.ondragover = function(e) {
+                e.preventDefault();
+                colDiv.classList.add('drag-over');
+            };
+            colDiv.ondragleave = function(e) {
+                if (!colDiv.contains(e.relatedTarget)) {
+                    colDiv.classList.remove('drag-over');
+                }
+            };
+            colDiv.ondrop = async function(e) {
+                e.preventDefault();
+                colDiv.classList.remove('drag-over');
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data.fromColumn !== col.id) {
+                        await moveTaskDirect(data.taskId, col.id);
+                    }
+                } catch (err) {
+                    console.error('Drop failed:', err);
+                }
+            };
+
+            const header = document.createElement('div');
+            header.className = 'kanban-header';
+            header.textContent = col.name + ' ';
+
+            const count = document.createElement('span');
+            count.style.opacity = '0.5';
+            count.textContent = '(' + col.tasks.length + ')';
+            header.appendChild(count);
+            colDiv.appendChild(header);
+
+            col.tasks.forEach(function(task) {
+                colDiv.appendChild(createKanbanCard(task, colorMap[col.color], col.id));
+            });
+
+            // Add task button for backlog
+            if (col.id === 'backlog') {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-task-btn';
+                addBtn.textContent = '+ Add Task';
+                addBtn.onclick = showAddModal;
+                colDiv.appendChild(addBtn);
+            }
+
+            return colDiv;
+        }
+
+        function showTaskModal(task, columnId) {
+            currentTask = task;
+            currentColumn = columnId;
+
+            document.getElementById('modal-title').textContent = task.title;
+
+            const body = document.getElementById('modal-body');
+            while (body.firstChild) body.removeChild(body.firstChild);
+
+            // Description
+            const descField = document.createElement('div');
+            descField.className = 'modal-field';
+            const descLabel = document.createElement('div');
+            descLabel.className = 'modal-label';
+            descLabel.textContent = 'Description';
+            const descValue = document.createElement('div');
+            descValue.className = 'modal-value';
+            descValue.textContent = task.description || 'No description';
+            descField.appendChild(descLabel);
+            descField.appendChild(descValue);
+            body.appendChild(descField);
+
+            // Category
+            const catField = document.createElement('div');
+            catField.className = 'modal-field';
+            const catLabel = document.createElement('div');
+            catLabel.className = 'modal-label';
+            catLabel.textContent = 'Category';
+            const catValue = document.createElement('div');
+            catValue.className = 'modal-value';
+            catValue.textContent = task.category || 'feature';
+            catField.appendChild(catLabel);
+            catField.appendChild(catValue);
+            body.appendChild(catField);
+
+            // Agent (if assigned)
+            if (task.agent) {
+                const agentField = document.createElement('div');
+                agentField.className = 'modal-field';
+                const agentLabel = document.createElement('div');
+                agentLabel.className = 'modal-label';
+                agentLabel.textContent = 'Agent';
+                const agentValue = document.createElement('div');
+                agentValue.className = 'modal-value';
+                agentValue.style.color = 'var(--purple)';
+                agentValue.textContent = task.agent;
+                agentField.appendChild(agentLabel);
+                agentField.appendChild(agentValue);
+                body.appendChild(agentField);
+            }
+
+            // Artifact link (if present)
+            if (task.artifact) {
+                const artifactField = document.createElement('div');
+                artifactField.className = 'modal-field';
+                const artifactLabel = document.createElement('div');
+                artifactLabel.className = 'modal-label';
+                artifactLabel.textContent = 'Artifact';
+                const artifactLink = document.createElement('a');
+                artifactLink.href = task.artifact;
+                artifactLink.textContent = 'View Document →';
+                artifactLink.style.cssText = 'color: var(--accent); text-decoration: none; font-size: 14px;';
+                artifactLink.target = '_blank';
+                artifactField.appendChild(artifactLabel);
+                artifactField.appendChild(artifactLink);
+                body.appendChild(artifactField);
+            }
+
+            // Build actions based on column
+            const actions = document.getElementById('modal-actions');
+            while (actions.firstChild) actions.removeChild(actions.firstChild);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn btn-secondary';
+            closeBtn.textContent = 'Close';
+            closeBtn.onclick = closeModal;
+            actions.appendChild(closeBtn);
+
+            // Move actions based on current column
+            if (columnId === 'backlog') {
+                const startBtn = document.createElement('button');
+                startBtn.className = 'btn btn-primary';
+                startBtn.textContent = 'Start Work';
+                startBtn.onclick = function() { moveTask('in_progress'); };
+                actions.appendChild(startBtn);
+            } else if (columnId === 'in_progress') {
+                const reviewBtn = document.createElement('button');
+                reviewBtn.className = 'btn btn-primary';
+                reviewBtn.textContent = 'Submit for Review';
+                reviewBtn.onclick = function() { moveTask('review'); };
+                actions.appendChild(reviewBtn);
+            } else if (columnId === 'review') {
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'btn btn-secondary';
+                rejectBtn.textContent = 'Needs Work';
+                rejectBtn.onclick = function() { moveTask('in_progress'); };
+                actions.appendChild(rejectBtn);
+
+                const approveBtn = document.createElement('button');
+                approveBtn.className = 'btn btn-success';
+                approveBtn.textContent = 'Approve & Complete';
+                approveBtn.onclick = function() { moveTask('done'); };
+                actions.appendChild(approveBtn);
+            }
+
+            document.getElementById('task-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').classList.remove('active');
+            currentTask = null;
+            currentColumn = null;
+        }
+
+        function showAddModal() {
+            document.getElementById('new-task-title').value = '';
+            document.getElementById('new-task-desc').value = '';
+            document.getElementById('new-task-category').value = 'feature';
+            document.getElementById('add-task-modal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-task-modal').classList.remove('active');
+        }
+
+        async function submitNewTask() {
+            const title = document.getElementById('new-task-title').value.trim();
+            const description = document.getElementById('new-task-desc').value.trim();
+            const category = document.getElementById('new-task-category').value;
+
+            if (!title) {
+                alert('Please enter a title');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/kanban/task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: title, description: description, category: category })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAddModal();
+                    loadKanban();
+                }
+            } catch (e) {
+                console.error('Failed to add task:', e);
+            }
+        }
+
+        async function moveTask(targetColumn) {
+            if (!currentTask) return;
+
+            try {
+                const res = await fetch('/api/kanban/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskId: currentTask.id, targetColumn: targetColumn })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal();
+                    loadKanban();
+                }
+            } catch (e) {
+                console.error('Failed to move task:', e);
+            }
+        }
+
+        async function moveTaskDirect(taskId, targetColumn) {
+            try {
+                const res = await fetch('/api/kanban/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskId: taskId, targetColumn: targetColumn })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadKanban();
+                }
+            } catch (e) {
+                console.error('Failed to move task:', e);
+            }
+        }
+
+        async function loadKanban() {
+            try {
+                const res = await fetch('/api/kanban');
+                kanbanData = await res.json();
+
+                const board = document.getElementById('kanban-board');
+                const updated = document.getElementById('kanban-updated');
+
+                while (board.firstChild) board.removeChild(board.firstChild);
+
+                kanbanData.columns.forEach(function(col) {
+                    board.appendChild(createKanbanColumn(col));
+                });
+
+                updated.textContent = 'Updated: ' + new Date(kanbanData.lastUpdated).toLocaleString();
+            } catch (e) {
+                console.error('Failed to load kanban:', e);
+            }
+        }
+
+        async function loadMetrics() {
+            try {
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
+
+                document.querySelectorAll('.metric-value').forEach(function(el) {
+                    const label = el.nextElementSibling?.textContent?.toLowerCase();
+                    if (label === 'productivity') el.textContent = data.productivity.multiplier + 'x';
+                    if (label === 'features done') el.textContent = data.codebase.features.completed;
+                    if (label === 'lines of code') el.textContent = (data.codebase.totalLines / 1000).toFixed(1) + 'K';
+                    if (label === 'commits') el.textContent = data.codebase.commits;
+                });
+            } catch (e) {
+                console.error('Failed to load metrics:', e);
+            }
+        }
+
+        async function loadProjects() {
+            try {
+                const res = await fetch('/api/projects');
+                const data = await res.json();
+
+                const selector = document.getElementById('project-selector');
+                while (selector.firstChild) selector.removeChild(selector.firstChild);
+
+                data.projects.forEach(function(project) {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    if (project.id === data.active) {
+                        option.selected = true;
+                    }
+                    selector.appendChild(option);
+                });
+
+                selector.onchange = function() {
+                    selectProject(this.value);
+                };
+            } catch (e) {
+                console.error('Failed to load projects:', e);
+            }
+        }
+
+        async function selectProject(projectId) {
+            if (!projectId) return;
+
+            try {
+                const res = await fetch('/api/projects/select', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectId: projectId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadKanban();
+                    loadMetrics();
+                }
+            } catch (e) {
+                console.error('Failed to select project:', e);
+            }
+        }
+
+        function showNewProjectModal() {
+            document.getElementById('new-project-name').value = '';
+            document.getElementById('new-project-desc').value = '';
+            document.getElementById('new-project-modal').classList.add('active');
+        }
+
+        function closeNewProjectModal() {
+            document.getElementById('new-project-modal').classList.remove('active');
+        }
+
+        async function submitNewProject() {
+            const name = document.getElementById('new-project-name').value.trim();
+            const description = document.getElementById('new-project-desc').value.trim();
+
+            if (!name) {
+                alert('Please enter a project name');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, description: description })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeNewProjectModal();
+                    await loadProjects();
+                    selectProject(data.projectId);
+                }
+            } catch (e) {
+                console.error('Failed to create project:', e);
+                alert('Failed to create project');
+            }
+        }
+
+        // Close modals on overlay click
+        document.getElementById('task-modal').onclick = function(e) {
+            if (e.target === this) closeModal();
+        };
+        document.getElementById('add-task-modal').onclick = function(e) {
+            if (e.target === this) closeAddModal();
+        };
+        document.getElementById('new-project-modal').onclick = function(e) {
+            if (e.target === this) closeNewProjectModal();
+        };
+
+        // Load data on page load
+        loadProjects();
+        loadKanban();
+        loadMetrics();
+
+        // Refresh every 30 seconds
+        setInterval(function() {
+            loadKanban();
+            loadMetrics();
+        }, 30000);
+
+        console.log('Shebang! Dashboard loaded at', new Date().toLocaleTimeString());
+    </script>
+</body>
+</html>
