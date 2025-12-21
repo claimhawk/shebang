@@ -43,6 +43,26 @@ python3 web/server.py
 | **Testing Docs** | 3000+ lines of testing best practices, anti-patterns, language guides |
 | **macOS App** | Native Swift/SwiftUI development environment (optional, requires Xcode 16+) |
 
+### Create Your Own Project
+
+Once you've forked Shebang, use the `/new` command to create your own projects:
+
+```
+> /new
+
+Claude will ask:
+- Project name (required)
+- Description (optional)
+
+A new folder is created with:
+- .shebang/ directory for project data
+- README.md and .gitignore
+- Empty kanban board ready for your tasks
+
+The agent automatically detects your tech stack and generates
+best practices tailored to your project.
+```
+
 ### Run the Quality Checks
 
 ```bash

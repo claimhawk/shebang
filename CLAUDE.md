@@ -89,6 +89,38 @@ Read `agent/CODE_QUALITY.md` for language-specific requirements:
 ./scripts/build-docs.sh          # Build HTML documentation
 ```
 
+### Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/new` | Create a new Shebang project in the current directory |
+
+#### /new - Create New Project
+
+When a user types `/new`, follow the workflow in `.claude/commands/new.md`:
+
+1. **Ask questions** using AskUserQuestion:
+   - Project name (required)
+   - Description (optional)
+   - Technology stack (optional - defaults to "Agent decides" where the agent will detect and adapt)
+
+2. **Create project** by running:
+   ```bash
+   python3 scripts/new-project.py \
+     --name "Project Name" \
+     --description "Description" \
+     --tech "Python" \
+     --type "Personal" \
+     --path "$(pwd)"
+   ```
+
+3. **Launch best practices agent** in background:
+   - Use Task tool with `subagent_type="general-purpose"`
+   - Create `best-practices.md` and `anti-patterns.md` in `.shebang/`
+   - Tailored to the chosen technology stack
+
+4. **Report success** to user with next steps
+
 ---
 
 ## Hook System
