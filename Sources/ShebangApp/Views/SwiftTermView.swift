@@ -143,13 +143,27 @@ struct SwiftTermView: NSViewRepresentable {
 
         func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
             // Directory changed - update session CWD reactively
-            if let dir = directory {
-                print("🔄 Terminal CWD changed to: \(dir)")
-                let url = URL(fileURLWithPath: dir)
-                DispatchQueue.main.async {
-                    print("🔄 Updating session CWD to: \(url.path)")
-                    AppState.shared.sessions.updateActiveSessionCWD(url)
+            // OSC 7 sends: file://hostname/path - we need just the path
+            guard let dir = directory else { return }
+
+            print("🔄 Terminal CWD update received: \(dir)")
+
+            let url: URL
+            if dir.hasPrefix("file://") {
+                // Parse OSC 7 URL format: file://hostname/path
+                if let parsed = URL(string: dir), let path = parsed.path.removingPercentEncoding {
+                    url = URL(fileURLWithPath: path.isEmpty ? "/" : path)
+                } else {
+                    return
                 }
+            } else {
+                // Plain path
+                url = URL(fileURLWithPath: dir)
+            }
+
+            DispatchQueue.main.async {
+                print("🔄 Updating session CWD to: \(url.path)")
+                AppState.shared.sessions.updateActiveSessionCWD(url)
             }
         }
 
