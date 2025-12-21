@@ -210,3 +210,19 @@ This is free and unencumbered software released into the public domain. See LICE
 *Built by practitioners, for practitioners. From first principles, in the environment itself.*
 
 **Power to the people. No gatekeeping. No barriers. Just build.**
+
+---
+
+<div align="center">
+
+### 🚀 We're Hiring
+
+**ClaimHawk** builds computer-use agents that automate real work using vision-language models.
+
+If you have a passion for machine learning (and some real background) and want to see the path to **100x developer** — we have open intern positions.
+
+**No resumes.** Just shoot an email with your qualifications and passions to:
+
+📧 **hello@claimhawk.app**
+
+</div>
