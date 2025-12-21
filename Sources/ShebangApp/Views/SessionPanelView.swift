@@ -33,7 +33,7 @@ struct SessionPanelView: View {
             }
         }
         .frame(maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(Color.Shebang.bgSecondary)
     }
 
     // MARK: - Header
@@ -52,7 +52,7 @@ struct SessionPanelView: View {
 
             Spacer()
 
-            // New session button - pill style
+            // New session button - VS Code style
             Button {
                 state.sessions.createSession()
             } label: {
@@ -60,20 +60,15 @@ struct SessionPanelView: View {
                     Image(systemName: "plus")
                         .font(.system(size: 11, weight: .bold))
                     Text("new")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 }
                 .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color.accentColor)
-                )
-                .shadow(color: Color.accentColor.opacity(isNewButtonHovered ? 0.5 : 0.3), radius: isNewButtonHovered ? 8 : 4)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.Shebang.accentPrimary)
             }
             .buttonStyle(.plain)
-            .scaleEffect(isNewButtonHovered ? 1.05 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isNewButtonHovered)
+            .opacity(isNewButtonHovered ? 0.8 : 1.0)
             .onHover { isNewButtonHovered = $0 }
             .help("New Session")
         }
@@ -153,22 +148,16 @@ struct SessionRowView: View {
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(backgroundColor)
-                .shadow(color: isActive ? Color.accentColor.opacity(0.2) : .clear, radius: 8)
-        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(backgroundColor)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            Rectangle()
                 .strokeBorder(
-                    isActive ? Color.accentColor.opacity(0.5) : Color.clear,
-                    lineWidth: 1.5
+                    isActive ? Color.Shebang.accentPrimary : Color.clear,
+                    lineWidth: 1
                 )
         )
-        .scaleEffect(isHovering ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
         .contentShape(Rectangle())
         .onTapGesture {
             onSelect()
@@ -184,11 +173,11 @@ struct SessionRowView: View {
 
     private var backgroundColor: Color {
         if isActive {
-            return Color.accentColor.opacity(0.12)
+            return Color.Shebang.accentPrimary.opacity(0.15)
         } else if isHovering {
-            return Color.primary.opacity(0.06)
+            return Color.Shebang.bgTertiary
         } else {
-            return Color(nsColor: .windowBackgroundColor).opacity(0.5)
+            return Color.Shebang.bgSecondary
         }
     }
 

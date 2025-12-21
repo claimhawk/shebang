@@ -113,44 +113,36 @@ struct CommandBarView: View {
                     showCompletions = false
                 }
 
-                // Submit button with glow (Shift+Enter hint)
+                // Submit button - VS Code style
                 Button {
                     executeCommand()
                 } label: {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(commandText.isEmpty ? Color.secondary : .white)
+                        .foregroundStyle(commandText.isEmpty ? Color.Shebang.textMuted : .white)
                         .padding(8)
-                        .background(
-                            Circle()
-                                .fill(commandText.isEmpty ? Color.clear : Color.accentColor)
-                        )
-                        .shadow(color: commandText.isEmpty ? .clear : Color.accentColor.opacity(0.5), radius: isSubmitHovered ? 8 : 4)
+                        .background(commandText.isEmpty ? Color.clear : Color.Shebang.accentPrimary)
                 }
                 .buttonStyle(.plain)
                 .disabled(commandText.isEmpty)
-                .scaleEffect(isSubmitHovered && !commandText.isEmpty ? 1.1 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSubmitHovered)
+                .opacity(isSubmitHovered && !commandText.isEmpty ? 0.8 : 1.0)
                 .onHover { isSubmitHovered = $0 }
             }
             .padding(.leading, 14)
             .padding(.trailing, 6)
             .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(nsColor: .textBackgroundColor).opacity(0.8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(
-                                isFocused ? Color.accentColor.opacity(0.5) : Color.clear,
-                                lineWidth: 2
-                            )
+            .background(Color.Shebang.bgTertiary)
+            .overlay(
+                Rectangle()
+                    .strokeBorder(
+                        isFocused ? Color.Shebang.accentPrimary : Color.Shebang.bgElevated,
+                        lineWidth: 1
                     )
             )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .background(Color.Shebang.bgSecondary)
         .overlay(alignment: .topLeading) {
             // Completion popup
             if showCompletions && !completions.isEmpty {
@@ -163,17 +155,17 @@ struct CommandBarView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(index == selectedCompletion ? Color.accentColor.opacity(0.3) : Color.clear)
+                        .background(index == selectedCompletion ? Color.Shebang.accentPrimary.opacity(0.3) : Color.clear)
                         .onTapGesture {
                             applyCompletion(completion)
                         }
                     }
                 }
                 .frame(minWidth: 200)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(nsColor: .windowBackgroundColor))
-                        .shadow(radius: 8)
+                .background(Color.Shebang.bgSecondary)
+                .overlay(
+                    Rectangle()
+                        .strokeBorder(Color.Shebang.bgElevated, lineWidth: 1)
                 )
                 .offset(x: 16, y: -CGFloat(completions.count * 28) - 8)
             }

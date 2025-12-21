@@ -37,7 +37,7 @@ struct SidebarView: View {
             }
         }
         .frame(maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(Color.Shebang.bgSecondary)
     }
 
     // MARK: - Header
@@ -255,7 +255,7 @@ struct FileTreeNode: View {
                 if isDirectory {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(isHovered ? Color.accentColor : .secondary)
+                        .foregroundStyle(isHovered ? Color.Shebang.accentPrimary : Color.Shebang.textMuted)
                         .frame(width: 12)
                         .rotationEffect(.degrees(isExpanded ? 0 : 0))
                 } else {
@@ -279,11 +279,7 @@ struct FileTreeNode: View {
             .padding(.leading, CGFloat(depth) * 16 + 10)
             .padding(.vertical, 5)
             .padding(.trailing, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(backgroundColor)
-                    .padding(.horizontal, 6)
-            )
+            .background(backgroundColor)
             .contentShape(Rectangle())
             .onTapGesture {
                 onFileSelect(url)
@@ -355,9 +351,9 @@ struct FileTreeNode: View {
 
     private var backgroundColor: Color {
         if isSelected {
-            return Color.accentColor.opacity(0.2)
+            return Color.Shebang.accentPrimary.opacity(0.2)
         } else if isHovered {
-            return Color.primary.opacity(0.06)
+            return Color.Shebang.bgTertiary
         } else {
             return Color.clear
         }

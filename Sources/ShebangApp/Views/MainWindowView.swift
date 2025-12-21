@@ -25,7 +25,7 @@ struct MainWindowView: View {
                 if state.ui.sidebarOpen {
                     SidebarView(onFileSelect: openFilePreview)
                         .frame(width: sidebarWidth)
-                        .background(Color(nsColor: .windowBackgroundColor))
+                        .background(Color.Shebang.bgSecondary)
 
                     // Sidebar handle
                     PanelHandle(
@@ -85,7 +85,7 @@ struct MainWindowView: View {
                     // Command bar at bottom (dynamic height for multi-line)
                     CommandBarView()
                         .frame(minHeight: commandBarHeight)
-                        .background(Color(nsColor: .windowBackgroundColor))
+                        .background(Color.Shebang.bgSecondary)
                 }
 
                 // Right sessions panel (resizes terminal when open/closed)
@@ -101,7 +101,7 @@ struct MainWindowView: View {
 
                     SessionPanelView()
                         .frame(width: sessionsPanelWidth)
-                        .background(Color(nsColor: .windowBackgroundColor))
+                        .background(Color.Shebang.bgSecondary)
                 } else {
                     // Collapsed handle only
                     PanelHandle(
@@ -209,7 +209,7 @@ struct PanelHandle: View {
 
     var body: some View {
         Rectangle()
-            .fill(isHovered ? Color.accentColor.opacity(0.3) : Color(nsColor: .separatorColor).opacity(0.5))
+            .fill(isHovered ? Color.Shebang.accentPrimary.opacity(0.3) : Color.Shebang.bgElevated)
             .frame(width: 6)
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -227,7 +227,7 @@ struct PanelHandle: View {
             }
             .overlay {
                 Rectangle()
-                    .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
+                    .fill(isHovered ? Color.Shebang.accentPrimary : Color.Shebang.bgElevated)
                     .frame(width: 1)
             }
             .help(isOpen ? "Close panel" : "Open panel")
@@ -248,7 +248,7 @@ struct HorizontalPanelHandle: View {
 
     var body: some View {
         Rectangle()
-            .fill(isHovered ? Color.accentColor.opacity(0.3) : Color(nsColor: .separatorColor).opacity(0.5))
+            .fill(isHovered ? Color.Shebang.accentPrimary.opacity(0.3) : Color.Shebang.bgElevated)
             .frame(height: 6)
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -266,7 +266,7 @@ struct HorizontalPanelHandle: View {
             }
             .overlay {
                 Rectangle()
-                    .fill(isHovered ? Color.accentColor : Color(nsColor: .separatorColor))
+                    .fill(isHovered ? Color.Shebang.accentPrimary : Color.Shebang.bgElevated)
                     .frame(height: 1)
             }
             .help(isOpen ? "Close drawer" : "Open favorites")
