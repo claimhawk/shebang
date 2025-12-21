@@ -2,6 +2,8 @@
 
 This document consolidates hard-won lessons from decades of software engineering, distilled into actionable guardrails for autonomous agents and human developers alike.
 
+**See also:** `ANTI_PATTERNS.md` for the full 14-section guide with LISP-inspired principles.
+
 ---
 
 ## Philosophy

@@ -1,12 +1,16 @@
 # Claude Autonomous Code Starter Kit
 
-A comprehensive starter kit for building projects with Claude Code that includes:
+A comprehensive starter kit for building projects with Claude Code that enforces **30 years of software engineering best practices** through automated guardrails.
 
-- **Guardrails System** - Pre/Post tool use hooks for security and automation
-- **Code Quality Standards** - Python and TypeScript linting, type checking, complexity analysis
-- **Three-Phase Protocol** - Research → Plan → Implement workflow with documentation
+## Features
+
+- **Multi-Layer Guardrails** - PreToolUse/PostToolUse hooks + Hookify rules
+- **Code Quality Enforcement** - Python and TypeScript anti-pattern detection
+- **Secret Protection** - 50+ secret patterns detected and blocked
+- **Anti-Pattern Detection** - Prevents silent exceptions, `any` types, junk drawer dirs
+- **Three-Phase Protocol** - Research → Plan → Implement workflow
+- **Auto-Formatting** - Ruff (Python) and Prettier (TypeScript) on save
 - **Inter-Agent Communication** - File-based messaging between autonomous agents
-- **Automation Scripts** - Pre-commit hooks, security sweeps, copyright management
 
 ## Quick Start
 
@@ -79,7 +83,9 @@ your-project/
 │   └── system.md              # Agent workflow protocol template
 ├── examples/
 │   └── python-example/        # Working example project
-├── CODE_QUALITY.md            # Quality standards
+├── ANTI_PATTERNS.md           # 14-section LISP-inspired guide
+├── BEST_PRACTICES.md          # Quick reference for best practices
+├── CODE_QUALITY.md            # Python quality standards
 ├── CLAUDE.md                  # Your project's Claude guidance
 ├── system.md                  # Your agent workflow protocol
 └── COPYRIGHT.txt              # Your copyright header
@@ -87,21 +93,40 @@ your-project/
 
 ## Guardrails System
 
-The guardrails system uses Claude Code hooks to intercept tool operations:
+The guardrails system uses **three layers of defense** to enforce best practices:
 
-### PreToolUse Hooks
+### Layer 1: PreToolUse Hooks (Preventive)
 
-1. **validate_edit.py** - Blocks writes to sensitive files (.env, .git/, credentials, etc.)
-2. **validate_secrets.py** - Detects API keys, tokens, and secrets in content
-3. **validate_command.py** - Blocks dangerous shell commands (rm -rf /, force push, etc.)
+| Hook | Purpose |
+|------|---------|
+| `validate_edit.py` | Blocks writes to sensitive files (.env, .git/, credentials, keys) |
+| `validate_secrets.py` | Detects 50+ secret patterns (API keys, tokens, connection strings) |
+| `validate_command.py` | Blocks dangerous commands (rm -rf, force push, chmod 777) |
+| `validate_quality.py` | Detects code anti-patterns (silent exceptions, `any` types, junk drawers) |
 
-### PostToolUse Hooks
+### Layer 2: PostToolUse Hooks (Automatic Maintenance)
 
-1. **post_write.py** - Auto-formats Python files with ruff and adds copyright headers
+| Hook | Purpose |
+|------|---------|
+| `post_write.py` | Auto-formats Python (ruff) and TypeScript (prettier), adds copyright headers |
+
+### Layer 3: Hookify Rules (Content-Based Blocking)
+
+| Rule | Purpose |
+|------|---------|
+| `hookify.secrets-detection.local.md` | Blocks API keys in code |
+| `hookify.env-files.local.md` | Prevents committing .env files |
+| `hookify.hardcoded-urls.local.md` | Blocks hardcoded deployment URLs |
+| `hookify.password-detection.local.md` | Detects hardcoded passwords |
+| `hookify.quality-python.local.md` | Enforces Python quality standards |
+| `hookify.any-type.local.md` | Blocks TypeScript `any` type usage |
+| `hookify.silent-exceptions.local.md` | Blocks silent exception handlers |
+| `hookify.junk-drawers.local.md` | Blocks utils/helpers/common directories |
+| `hookify.console-statements.local.md` | Warns on console.log/print statements |
 
 ### Configuration
 
-All patterns are defined in `scripts/guardrails/config.yaml`:
+All patterns are centralized in `scripts/guardrails/config.yaml`:
 
 ```yaml
 # Block writes to these files
@@ -110,17 +135,38 @@ protected_paths:
     - '\.env($|\.).*'
     - '^\.git/'
     - 'credentials\.json'
+    - '\.npmrc$'               # NPM credentials
+    - 'kubeconfig'             # Kubernetes secrets
 
-# Detect these secret patterns
+# Detect these secret patterns (50+ patterns)
 secrets:
   - pattern: 'sk-ant-[a-zA-Z0-9\-]{20,}'
     name: Anthropic API Key
+  - pattern: 'ghp_[a-zA-Z0-9]{36}'
+    name: GitHub Personal Access Token
+  # ... and many more
 
 # Block these commands
 commands:
   block:
     - 'rm\s+-rf\s+/'
     - 'git\s+push.*--force'
+    - 'curl.*\|\s*(ba)?sh'     # Piping to shell
+
+# Anti-patterns by language
+anti_patterns:
+  python:
+    - pattern: 'except.*:\s*\n\s*pass'
+      name: Silent exception handler
+  typescript:
+    - pattern: ':\s*any\b'
+      name: any type usage
+
+# Forbidden directories
+junk_drawers:
+  - 'utils/'
+  - 'helpers/'
+  - 'common/'
 ```
 
 ## Three-Phase Protocol
@@ -170,19 +216,46 @@ The receiving agent watches for new messages and executes the requested work.
 | Formatting | ruff format | Enforced |
 | Type checking | mypy --strict | Zero errors |
 | Complexity | radon | Max CC: 10 |
+| Function length | - | Max 50-60 lines |
+| Nesting depth | - | Max 3 levels |
+
+### TypeScript Quality Gates
+
+| Check | Tool | Threshold |
+|-------|------|-----------|
+| Linting | ESLint | Zero warnings |
+| Formatting | Prettier | Enforced |
+| Type checking | tsc --noEmit | Zero errors |
+| No `any` types | - | Blocked by guardrails |
+| JSX nesting | - | Max 4 levels |
 
 ### Running Quality Checks
 
 ```bash
-# Check staged files
+# Python: Check staged files
 ./scripts/pre-commit.sh
 
-# Check all tracked files
+# Python: Check all tracked files
 ./scripts/pre-commit.sh --all
 
-# Security sweep
+# TypeScript: Check staged files
+./scripts/pre-commit-ts.sh
+
+# TypeScript: Check all tracked files
+./scripts/pre-commit-ts.sh --all
+
+# Security sweep (both languages)
 ./scripts/security-sweep.sh
 ```
+
+### Best Practices Guide
+
+See `BEST_PRACTICES.md` for comprehensive guidelines including:
+- Anti-patterns to avoid (with examples)
+- Functional programming principles
+- Domain-driven directory structure
+- Naming conventions
+- Error handling standards
 
 ## Templates
 
