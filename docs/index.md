@@ -173,12 +173,22 @@ Built from first principles. In the environment itself. Because the tools we use
 
 It's public domain. Fork it. Change it. Make it yours.
 
-If you want to contribute back:
-1. Fork the repo
-2. Make your changes
-3. Send a PR
+**If you want to contribute back:**
 
-No CLA. No corporate approval. Just code.
+1. **Fork the repo**
+2. **Implement using Shebang** — dogfood it. If you're not building with the tool, you're not feeling the pain points.
+3. **Use it for a week** — real-world testing. Does it actually work? Does it fit naturally into the workflow?
+4. **Submit a PR** — only after you've lived with it.
+
+**Your feature must match the spirit of the philosophy.** If it doesn't align with:
+- Terminal as first-class citizen
+- The interface getting out of your way
+- Knowledge becoming infrastructure
+- Agentic-first design
+
+...it won't be included. Read [PHILOSOPHY.md](PHILOSOPHY.md) before proposing major features.
+
+No CLA. No corporate approval. Just code that embodies the vision.
 
 ## What This Enables
 
