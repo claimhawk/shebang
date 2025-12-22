@@ -137,8 +137,9 @@ struct SwiftTermView: NSViewRepresentable {
         // tmux 3.3+ supports 'all' for allow-passthrough, earlier versions use 'on'
         terminalView.send(txt: "tmux set-option -g allow-passthrough all 2>/dev/null || tmux set-option -g allow-passthrough on 2>/dev/null\n")
 
-        // Enable tmux mouse mode for trackpad/mouse wheel scrolling
-        terminalView.send(txt: "tmux set-option -g mouse on 2>/dev/null\n")
+        // NOTE: We do NOT enable tmux mouse mode because it sends escape sequences
+        // that re-enable mouse reporting, breaking SwiftTerm's native text selection.
+        // Scrolling is handled by our custom scroller that talks to tmux directly.
 
         // Set up the zsh chpwd hook to emit OSC 7 with DCS passthrough
         // DCS format: \eP (start) + tmux; (app identifier) + \e (escape the inner sequence) + sequence + \e\\ (end DCS)
@@ -649,9 +650,36 @@ class ReadOnlyTerminalContainer: NSView {
         terminalView.mouseUp(with: event)
     }
 
-    // Allow mouse events for scrolling
+    // Handle scroll wheel by sending commands to tmux directly
+    // (since we disabled tmux mouse mode to preserve text selection)
     override func scrollWheel(with event: NSEvent) {
-        terminalView.scrollWheel(with: event)
+        guard let sessionName = tmuxSessionName else {
+            terminalView.scrollWheel(with: event)
+            return
+        }
+
+        let deltaY = event.scrollingDeltaY
+
+        // Enter copy mode if scrolling up
+        if deltaY > 0 && !isInCopyMode {
+            runTmuxCommand("copy-mode -t \(sessionName)")
+            isInCopyMode = true
+        }
+
+        // Convert scroll delta to line count
+        let lines = Int(abs(deltaY) / 3) + 1
+
+        if deltaY > 0 {
+            // Scroll up
+            for _ in 0..<lines {
+                runTmuxCommand("send-keys -t \(sessionName) -X scroll-up")
+            }
+        } else if deltaY < 0 && isInCopyMode {
+            // Scroll down (only in copy mode)
+            for _ in 0..<lines {
+                runTmuxCommand("send-keys -t \(sessionName) -X scroll-down")
+            }
+        }
     }
 }
 
