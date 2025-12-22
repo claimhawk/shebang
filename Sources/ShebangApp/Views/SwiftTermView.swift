@@ -110,11 +110,27 @@ struct SwiftTermView: NSViewControllerRepresentable {
 
 class TerminalViewController: NSViewController {
     let terminalView = LocalProcessTerminalView(frame: .zero)
+    private var containerView: NSView!
     var session: Session?
     weak var coordinator: SwiftTermView.Coordinator?
 
     override func loadView() {
-        view = terminalView
+        // Use flipped container for consistent coordinates with SwiftUI
+        containerView = FlippedView(frame: .zero)
+        containerView.wantsLayer = true
+        containerView.layer?.backgroundColor = NSColor(red: 0.118, green: 0.118, blue: 0.118, alpha: 1.0).cgColor
+
+        terminalView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(terminalView)
+
+        NSLayoutConstraint.activate([
+            terminalView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            terminalView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            terminalView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            terminalView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+        ])
+
+        view = containerView
     }
 
     override func viewDidLoad() {
@@ -157,6 +173,13 @@ class TerminalViewController: NSViewController {
             self.terminalView.send(txt: "cd '\(workDir)' && clear\n")
         }
     }
+}
+
+// MARK: - Flipped View
+
+/// NSView with flipped coordinate system (origin at top-left like SwiftUI)
+class FlippedView: NSView {
+    override var isFlipped: Bool { true }
 }
 
 // MARK: - Preview
