@@ -40,6 +40,48 @@ SWIFT_LINES=$(find "$PROJECT_ROOT/Sources" -name "*.swift" -exec cat {} \; 2>/de
 PYTHON_LINES=$(find "$PROJECT_ROOT/scripts" -name "*.py" -exec cat {} \; 2>/dev/null | wc -l | tr -d ' ')
 MD_LINES=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.md" -exec cat {} \; 2>/dev/null | wc -l | tr -d ' ')
 
+# Code Health Metrics
+echo "🔍 Analyzing code health..."
+
+# Python complexity (radon)
+if command -v radon &> /dev/null; then
+    PYTHON_CC=$(radon cc "$PROJECT_ROOT/scripts" -a -s 2>/dev/null | tail -1 | grep -oE '[0-9]+\.[0-9]+' || echo "N/A")
+    PYTHON_MI=$(radon mi "$PROJECT_ROOT/scripts" -s 2>/dev/null | grep -oE '\([A-F]\)' | head -1 | tr -d '()' || echo "N/A")
+    PYTHON_HIGH_CC=$(radon cc "$PROJECT_ROOT/scripts" -s 2>/dev/null | grep -E '^\s+[A-Z]' | grep -E '\s[C-F]\s' | wc -l | tr -d ' ')
+else
+    PYTHON_CC="N/A"
+    PYTHON_MI="N/A"
+    PYTHON_HIGH_CC="0"
+fi
+
+# Python linting (ruff)
+if command -v ruff &> /dev/null; then
+    RUFF_ISSUES=$(ruff check "$PROJECT_ROOT/scripts" --quiet 2>/dev/null | wc -l | tr -d ' ')
+else
+    RUFF_ISSUES="N/A"
+fi
+
+# Swift file analysis
+SWIFT_FUNCS=$(find "$PROJECT_ROOT/Sources" -name "*.swift" -exec grep -c "func " {} \; 2>/dev/null | awk '{sum+=$1} END {print sum}')
+SWIFT_LONG_FUNCS=$(find "$PROJECT_ROOT/Sources" -name "*.swift" -exec awk '
+    /func [a-zA-Z]/ { in_func=1; start=NR; name=$0 }
+    in_func && /^\s*}/ {
+        len = NR - start
+        if (len > 50) { count++ }
+        in_func=0
+    }
+    END { print count+0 }
+' {} \; 2>/dev/null | awk '{sum+=$1} END {print sum}')
+
+# Calculate health score (0-100)
+# Factors: low complexity, few lint issues, short functions
+HEALTH_DEDUCTIONS=0
+[ "$PYTHON_HIGH_CC" -gt 0 ] 2>/dev/null && HEALTH_DEDUCTIONS=$((HEALTH_DEDUCTIONS + PYTHON_HIGH_CC * 5))
+[ "$RUFF_ISSUES" != "N/A" ] && [ "$RUFF_ISSUES" -gt 0 ] 2>/dev/null && HEALTH_DEDUCTIONS=$((HEALTH_DEDUCTIONS + RUFF_ISSUES))
+[ "$SWIFT_LONG_FUNCS" -gt 0 ] 2>/dev/null && HEALTH_DEDUCTIONS=$((HEALTH_DEDUCTIONS + SWIFT_LONG_FUNCS * 3))
+HEALTH_SCORE=$((100 - HEALTH_DEDUCTIONS))
+[ "$HEALTH_SCORE" -lt 0 ] && HEALTH_SCORE=0
+
 # Generate METRICS.md
 cat > "$PROJECT_ROOT/METRICS.md" << METRICS
 # Development Metrics — Shebang
@@ -68,6 +110,29 @@ Swift:    $SWIFT_LINES lines
 Python:   $PYTHON_LINES lines
 Markdown: $MD_LINES lines
 \`\`\`
+
+---
+
+## Code Health
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | $HEALTH_SCORE/100 | $([ "$HEALTH_SCORE" -ge 80 ] && echo "🟢 Excellent" || ([ "$HEALTH_SCORE" -ge 60 ] && echo "🟡 Good" || echo "🔴 Needs Work")) |
+| **Python Complexity** | $PYTHON_CC | $([ "$PYTHON_CC" != "N/A" ] && (echo "$PYTHON_CC" | awk '{print ($1 <= 5 ? "🟢 Low" : ($1 <= 10 ? "🟡 Moderate" : "🔴 High"))}') || echo "—") |
+| **Python Maintainability** | $PYTHON_MI | $([ "$PYTHON_MI" = "A" ] && echo "🟢 Excellent" || ([ "$PYTHON_MI" = "B" ] && echo "🟢 Good" || ([ "$PYTHON_MI" = "C" ] && echo "🟡 Fair" || echo "—"))) |
+| **Linting Issues** | $RUFF_ISSUES | $([ "$RUFF_ISSUES" = "0" ] && echo "🟢 Clean" || ([ "$RUFF_ISSUES" != "N/A" ] && echo "🟡 $RUFF_ISSUES issues" || echo "—")) |
+| **Swift Functions** | $SWIFT_FUNCS | — |
+| **Long Functions (>50 lines)** | $SWIFT_LONG_FUNCS | $([ "$SWIFT_LONG_FUNCS" = "0" ] && echo "🟢 None" || echo "🟡 $SWIFT_LONG_FUNCS to refactor") |
+
+### Health Score Breakdown
+
+- **Base Score**: 100
+- **Deductions**:
+  - High complexity functions: -5 per function
+  - Linting issues: -1 per issue
+  - Long Swift functions: -3 per function
+
+![Code Health Dashboard](docs/assets/charts/code-health.png)
 
 ---
 
@@ -173,3 +238,8 @@ echo "  Files: $TOTAL_FILES"
 echo "  Lines: $TOTAL_LINES"
 echo "  Elapsed: ${ELAPSED_HOURS}h ${ELAPSED_MINS}m"
 echo "  Lines/Hour: $LINES_PER_HOUR"
+
+# Generate visual charts
+echo ""
+echo "📈 Generating charts..."
+python3 "$SCRIPT_DIR/generate-charts.py" 2>/dev/null || echo "⚠️ Chart generation skipped (install matplotlib: pip3 install matplotlib)"

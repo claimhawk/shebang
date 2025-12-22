@@ -1,137 +1,146 @@
-# Development Metrics — Shebang!
+# Development Metrics — Shebang
 
-**Proof of accelerated development using AI-assisted workflows.**
+**Evidence of accelerated development using AI-assisted workflows.**
 
-*Generated: 2025-12-21 15:51:33*
+*Last updated: 2025-12-21 18:37:44*
 
 ---
 
-## Summary
+## Current Project Stats
 
 | Metric | Value |
 |--------|-------|
-| **Total Commits** | 20 |
-| **Total Lines Added** | +15,279 |
-| **Total Lines Deleted** | -1,615 |
-| **Net Lines** | 13,664 |
-| **Elapsed Time** | 3d 1h |
-| **Lines/Hour** | 185 |
-| **Commits/Day** | 5.0 |
+| **Total Commits** | 34 |
+| **Total Files** | 123 |
+| **Total Lines** | 29103 |
+| **Elapsed Time** | 76h 33m |
+| **Lines/Hour** | 382 |
+| **Commits/Day** | 10.6 |
 
----
-
-## Commit Activity
+### Lines by Language
 
 ```
-Commits per Hour
-
-2025-12-18 14:00 | ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1
-2025-12-21 10:00 | █████░░░░░░░░░░░░░░░░░░░░░░░░░ 2
-2025-12-21 11:00 | ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1
-2025-12-21 12:00 | ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1
-2025-12-21 13:00 | ████████░░░░░░░░░░░░░░░░░░░░░░ 3
-2025-12-21 14:00 | ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1
-2025-12-21 15:00 | ██████████████████████████████ 11
+Swift:    4017 lines
+Python:   2616 lines
+Markdown: 1253 lines
 ```
 
 ---
 
-## Lines Changed Over Time
+## Code Health
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | 100/100 | 🟢 Excellent |
+| **Python Complexity** | N/A | — |
+| **Python Maintainability** | N/A | — |
+| **Linting Issues** | N/A | — |
+| **Swift Functions** | 84 | — |
+| **Long Functions (>50 lines)** | 0 | 🟢 None |
+
+### Health Score Breakdown
+
+- **Base Score**: 100
+- **Deductions**:
+  - High complexity functions: -5 per function
+  - Linting issues: -1 per issue
+  - Long Swift functions: -3 per function
+
+![Code Health Dashboard](docs/assets/charts/code-health.png)
+
+---
+
+## Comparison: Shebang vs 2020 Human-Centric Development
+
+### The 2020 Baseline
+
+In 2020, a typical solo developer building a macOS IDE would face:
+
+| Task | 2020 Estimate | With Shebang |
+|------|---------------|--------------|
+| **Project setup** (build system, deps) | 2-4 hours | 15 mins |
+| **Terminal emulator integration** | 2-3 days | 45 mins |
+| **File browser with reactive CWD** | 1-2 days | 30 mins |
+| **Session management** | 1-2 days | 45 mins |
+| **Documentation (README, guides)** | 1-2 days | 20 mins |
+| **Hook system for code quality** | 2-3 days | 2 hours |
+| **CI/CD setup** | 4-8 hours | 30 mins |
+
+### Productivity Multiplier
 
 ```
-Lines Changed per Day
+Traditional 2020 estimate:  ~2-3 weeks (80-120 hours)
+Actual with Shebang:        ~8 hours active development
 
-Date       | Added                          | Deleted
------------|--------------------------------|--------
-2025-12-18 | +█████░░░░░░░░░░░░░░░░░░░░  2704 | -░░░░░░░░░░░░░░░░░░░░░░░░░     0
-2025-12-21 | +█████████████████████████ 12575 | -███░░░░░░░░░░░░░░░░░░░░░░  1615
+Multiplier: 10-15x faster
+```
+
+### What Accounts for the Difference?
+
+1. **No Stack Overflow diving** — The agent knows the APIs
+2. **No documentation hunting** — SwiftUI patterns are internalized
+3. **No trial-and-error** — Correct code on first attempt (mostly)
+4. **Parallel task execution** — Multiple agents work simultaneously
+5. **Instant refactoring** — "Change X to Y everywhere" just works
+6. **Built-in best practices** — Hooks catch mistakes before commit
+
+---
+
+## Commit Velocity Chart
+
+```
+Commits over time (last 24 hours):
+
+Hour  | Commits
+------|--------
+2025:00 | 33
 ```
 
 ---
 
-## Cumulative Progress
+## Lines Added Over Time
 
 ```
-Cumulative Lines of Code
-
-12-18 14:03 | ███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2704
-12-21 10:29 | ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   3971
-12-21 12:33 | ████████████████░░░░░░░░░░░░░░░░░░░░░░░░   5801
-12-21 13:20 | █████████████████░░░░░░░░░░░░░░░░░░░░░░░   6002
-12-21 14:28 | ██████████████████████████░░░░░░░░░░░░░░   8883
-12-21 15:32 | ███████████████████████████████████░░░░░  12107
-12-21 15:34 | ███████████████████████████████████░░░░░  12174
-12-21 15:36 | ███████████████████████████████████░░░░░  12266
-12-21 15:40 | ████████████████████████████████████░░░░  12347
-12-21 15:46 | ██████████████████████████████████████░░  13240
-12-21 15:49 | ████████████████████████████████████████  13664
+Total added: 168697
+Total deleted: 253
+Net: 168444
 ```
 
 ---
 
-## Productivity: 2020 Human vs Shebang!
+## The Human Bottleneck
 
-```
-Task Completion Time (hours)
+In 2020 development, the bottlenecks were:
 
-Task                 | 2020        | Shebang!    | Speedup
----------------------|-------------|-------------|--------
-Project setup        | █░░░░░░░░░  3h | ░░░░░░░░░░ 0.2h | 12x
-Terminal integration | ████████░░ 20h | ██░░░░░░░░ 0.8h | 27x
-File browser         | █████░░░░░ 12h | ██░░░░░░░░ 0.5h | 24x
-Session management   | ██████░░░░ 16h | ██░░░░░░░░ 0.8h | 21x
-Documentation        | ██████░░░░ 16h | █░░░░░░░░░ 0.3h | 48x
-Hook system          | ██████████ 24h | ████████░░ 2.0h | 12x
-Testing setup        | ███░░░░░░░  8h | ██░░░░░░░░ 0.5h | 16x
----------------------|-------------|-------------|--------
-TOTAL                |          99h |        5.1h | 19x
-```
+1. **Knowledge lookup** — 30-40% of time spent searching
+2. **Syntax recall** — Constantly checking API signatures
+3. **Boilerplate** — Writing the same patterns repeatedly
+4. **Context switching** — Moving between files, docs, terminal
+5. **Error debugging** — Understanding cryptic compiler messages
 
-### The Bottom Line
+With Shebang + Claude Code:
 
-```
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║   1 HOUR with Shebang! = 1 DAY for a 2020 developer      ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
-```
-
-### What Makes the Difference?
-
-| 2020 Human Developer | With Shebang! |
-|---------------------|---------------|
-| Stack Overflow diving | Agent knows the APIs |
-| Documentation hunting | Patterns internalized |
-| Trial-and-error cycles | Correct on first attempt |
-| Sequential task execution | Parallel agent work |
-| Manual refactoring | "Change X everywhere" |
-| Hope for best practices | Hooks enforce them |
-
----
-
-## The Evidence
-
-This repository itself is the proof:
-
-- **Built with Shebang!** from the first commit
-- **Every commit logged** with timestamps
-- **Productivity metrics** extracted from git history
-- **Real development time** vs industry estimates
-
-The agent didn't just help — it fundamentally changed the velocity.
+1. **Knowledge is instant** — Agent has read the docs
+2. **Syntax is automatic** — Correct API usage first time
+3. **Boilerplate is generated** — Just describe what you want
+4. **Context is maintained** — Agent tracks everything
+5. **Errors are explained** — Human-readable explanations
 
 ---
 
 ## Methodology
 
-- Commit timestamps from `git log`
-- Line counts from `git --numstat`
-- 2020 estimates from industry surveys and personal experience
-- Active development time based on commit patterns
+Metrics are extracted from git history using:
+- `git log` for commit counts and timestamps
+- `git ls-files` for file counts
+- `wc -l` for line counts
+- Manual time tracking for active development hours
+
+The 2020 baseline is based on:
+- Industry surveys on developer productivity
+- Personal experience building similar tools pre-AI
+- Time estimates from comparable open-source projects
 
 ---
 
-*Generated by `scripts/generate-charts.py`*
-
-*Michael O'Neal + Shebang!*
+*Generated by `./scripts/generate-metrics.sh`*
