@@ -20,6 +20,9 @@ struct ShebangApp: App {
                     .onAppear {
                         // Load favorites on first launch
                         AppState.shared.ui.loadFavorites()
+
+                        // Ensure dependencies (tmux, etc.) are available
+                        SwiftTermView.ensureDependencies()
                     }
 
                 // Splash screen overlay

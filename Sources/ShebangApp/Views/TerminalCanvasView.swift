@@ -26,7 +26,8 @@ struct TerminalCanvasView: View {
                             session: session,
                             onOutput: handleTerminalOutput,
                             pendingCommand: state.terminal.pendingCommand,
-                            pendingControlChar: state.terminal.pendingControlChar
+                            pendingControlChar: state.terminal.pendingControlChar,
+                            isInteractiveMode: state.terminal.isClaudeRunning
                         )
 
                     case .blocks:

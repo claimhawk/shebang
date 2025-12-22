@@ -15,7 +15,6 @@ struct MainWindowView: View {
     private let sessionsPanelWidth: CGFloat = 280
     private let filePreviewWidth: CGFloat = 500
     private let favoritesDrawerHeight: CGFloat = 200
-    private let commandBarHeight: CGFloat = 90
 
     var body: some View {
         ZStack {
@@ -82,10 +81,13 @@ struct MainWindowView: View {
                         ))
                     }
 
-                    // Command bar at bottom (dynamic height for multi-line)
+                    // Command bar at bottom
+                    // Note: Stays visible but disabled during interactive mode
                     CommandBarView()
                         .frame(minHeight: commandBarHeight)
                         .background(Color.Shebang.bgSecondary)
+                        .opacity(state.terminal.isClaudeRunning ? 0.5 : 1.0)
+                        .allowsHitTesting(!state.terminal.isClaudeRunning)
                 }
 
                 // Right sessions panel (resizes terminal when open/closed)
@@ -119,6 +121,7 @@ struct MainWindowView: View {
         .animation(.easeInOut(duration: 0.25), value: state.ui.sessionsPanelOpen)
         .animation(.easeInOut(duration: 0.2), value: state.ui.filePreviewOpen)
         .animation(.easeInOut(duration: 0.2), value: state.ui.favoritesDrawerOpen)
+        .animation(.easeInOut(duration: 0.25), value: state.terminal.isClaudeRunning)
         .onChange(of: state.ui.sidebarOpen) { _, isOpen in
             // Close file preview when sidebar closes
             if !isOpen {
