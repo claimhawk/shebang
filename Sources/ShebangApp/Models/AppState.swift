@@ -333,6 +333,10 @@ final class TerminalState {
     /// Control character waiting to be sent (e.g., 0x03 for Ctrl+C)
     var pendingControlChar: UInt8?
 
+    /// Whether Claude Code is currently running in the terminal
+    /// When true, queries are sent as raw text; when false, wrapped as `claude "query"`
+    var isClaudeRunning = false
+
     // MARK: - Send Command
 
     func sendCommand(_ command: String) {
@@ -349,11 +353,13 @@ final class TerminalState {
     /// Send Ctrl+C (SIGINT)
     func sendInterrupt() {
         sendControlCharacter(0x03)  // ASCII ETX (End of Text) = Ctrl+C
+        isClaudeRunning = false  // Assume interrupt exits Claude
     }
 
     /// Send Ctrl+D (EOF)
     func sendEOF() {
         sendControlCharacter(0x04)  // ASCII EOT (End of Transmission) = Ctrl+D
+        isClaudeRunning = false  // EOF exits Claude
     }
 
     /// Send Ctrl+Z (SIGTSTP - suspend)
