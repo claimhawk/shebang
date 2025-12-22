@@ -1,0 +1,25 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Auth Modernization Wizard",
+  "workingDirectory": "/Users/dev/myproject",
+  "createdAt": "2024-01-10T14:00:00Z",
+  "lastActiveAt": "2024-01-11T16:30:00Z",
+  "status": "active",
+  "agentType": "wizard",
+  "parentAgent": null,
+  "specialists": [
+    {
+      "id": "oauth-implementation",
+      "status": "in_progress",
+      "progress": 0.65,
+      "created": "2024-01-10T15:30:00Z"
+    },
+    {
+      "id": "ui-migration",
+      "status": "blocked",
+      "blockedOn": "oauth-implementation",
+      "progress": 0.0,
+      "created": "2024-01-10T15:45:00Z"
+    }
+  ]
+}

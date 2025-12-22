@@ -1,0 +1,13 @@
+{
+  "id": "661f9511-f3ac-52e5-b827-557766551111",
+  "name": "OAuth Implementation",
+  "workingDirectory": "/Users/dev/myproject",
+  "createdAt": "2024-01-10T15:30:00Z",
+  "lastActiveAt": "2024-01-11T17:00:00Z",
+  "status": "active",
+  "agentType": "specialist",
+  "parentAgent": "wizard",
+  "progress": 0.65,
+  "tasksCompleted": 18,
+  "tasksTotal": 28
+}
