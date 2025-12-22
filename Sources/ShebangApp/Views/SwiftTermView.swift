@@ -22,7 +22,7 @@ struct SwiftTermView: NSViewRepresentable {
     // Interactive mode - when true, keyboard passes through to terminal
     var isInteractiveMode: Bool = false
 
-    func makeNSView(context: Context) -> TerminalContainer {
+    func makeNSView(context: Context) -> LocalProcessTerminalView {
         let terminalView = LocalProcessTerminalView(frame: .zero)
 
         // Store reference in coordinator
@@ -58,31 +58,25 @@ struct SwiftTermView: NSViewRepresentable {
             self.setupShellIntegration(terminalView)
         }
 
-        // Wrap in container
-        let container = TerminalContainer(terminalView: terminalView)
-        context.coordinator.container = container
-        return container
+        return terminalView
     }
 
-    func updateNSView(_ nsView: TerminalContainer, context: Context) {
+    func updateNSView(_ nsView: LocalProcessTerminalView, context: Context) {
         // Update coordinator callback
         context.coordinator.onOutput = onOutput
 
-        // Update interactive mode
-        nsView.isInteractiveMode = isInteractiveMode
-
         // Send pending command if available
-        if let command = pendingCommand, let terminalView = context.coordinator.terminalView {
-            terminalView.send(txt: command)
+        if let command = pendingCommand {
+            nsView.send(txt: command)
             DispatchQueue.main.async {
                 AppState.shared.terminal.pendingCommand = nil
             }
         }
 
         // Send pending control character if available
-        if let controlChar = pendingControlChar, let terminalView = context.coordinator.terminalView {
+        if let controlChar = pendingControlChar {
             let bytes: [UInt8] = [controlChar]
-            terminalView.send(data: bytes[...])
+            nsView.send(data: bytes[...])
             DispatchQueue.main.async {
                 AppState.shared.terminal.pendingControlChar = nil
             }
@@ -178,7 +172,6 @@ struct SwiftTermView: NSViewRepresentable {
     class Coordinator: NSObject, LocalProcessTerminalViewDelegate {
         var onOutput: ((Data) -> Void)?
         weak var terminalView: LocalProcessTerminalView?
-        weak var container: TerminalContainer?
 
         init(onOutput: ((Data) -> Void)?) {
             self.onOutput = onOutput
@@ -208,96 +201,6 @@ struct SwiftTermView: NSViewRepresentable {
         func processTerminated(source: TerminalView, exitCode: Int32?) {
             print("Terminal process exited: \(exitCode ?? -1)")
         }
-    }
-}
-
-// MARK: - Terminal Container
-
-/// Simple container with padding that passes events to terminal
-class TerminalContainer: NSView {
-    let terminalView: LocalProcessTerminalView
-    private let padding: CGFloat = 12
-
-    var isInteractiveMode: Bool = false
-    private var isHandlingEvent: Bool = false
-
-    init(terminalView: LocalProcessTerminalView) {
-        self.terminalView = terminalView
-        super.init(frame: .zero)
-
-        wantsLayer = true
-        layer?.backgroundColor = DefaultTheme.shared.background.cgColor
-
-        terminalView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(terminalView)
-
-        NSLayoutConstraint.activate([
-            terminalView.topAnchor.constraint(equalTo: topAnchor, constant: padding),
-            terminalView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -padding),
-            terminalView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
-            terminalView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding)
-        ])
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override var acceptsFirstResponder: Bool { true }
-
-    // Keyboard handling
-    override func keyDown(with event: NSEvent) {
-        guard !isHandlingEvent else { return }
-        isHandlingEvent = true
-        defer { isHandlingEvent = false }
-
-        if isInteractiveMode {
-            terminalView.keyDown(with: event)
-            return
-        }
-
-        // Allow Cmd+C for copy
-        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "c" {
-            terminalView.keyDown(with: event)
-        }
-    }
-
-    override func keyUp(with event: NSEvent) {
-        guard !isHandlingEvent else { return }
-        isHandlingEvent = true
-        defer { isHandlingEvent = false }
-
-        if isInteractiveMode {
-            terminalView.keyUp(with: event)
-        }
-    }
-
-    override func flagsChanged(with event: NSEvent) {
-        guard !isHandlingEvent else { return }
-        isHandlingEvent = true
-        defer { isHandlingEvent = false }
-
-        if isInteractiveMode {
-            terminalView.flagsChanged(with: event)
-        }
-    }
-
-    // Mouse events - pass directly to terminal for selection
-    override func mouseDown(with event: NSEvent) {
-        terminalView.mouseDown(with: event)
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        terminalView.mouseDragged(with: event)
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        terminalView.mouseUp(with: event)
-    }
-
-    // Scrolling - pass to terminal (SwiftTerm handles it)
-    override func scrollWheel(with event: NSEvent) {
-        terminalView.scrollWheel(with: event)
     }
 }
 
