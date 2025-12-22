@@ -11,10 +11,10 @@ struct TerminalCanvasView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // CWD Header - always visible at top
-            if let session = state.sessions.activeSession {
-                TerminalHeaderView(session: session)
-            }
+            // CWD Header disabled - causes mouse coordinate offset
+            // if let session = state.sessions.activeSession {
+            //     TerminalHeaderView(session: session)
+            // }
 
             // Terminal content
             Group {

@@ -5,78 +5,37 @@ import SwiftUI
 import SwiftTerm
 import AppKit
 
-/// SwiftUI wrapper for SwiftTerm's LocalProcessTerminalView
-/// Uses dtach for session persistence (attach/detach only, no other features)
-struct SwiftTermView: NSViewRepresentable {
+/// SwiftUI wrapper for SwiftTerm using NSViewControllerRepresentable
+/// for proper coordinate translation
+struct SwiftTermView: NSViewControllerRepresentable {
     let session: Session
 
-    // Output callback for block parsing
     var onOutput: ((Data) -> Void)?
-
-    // Observe pending commands from AppState
     var pendingCommand: String?
-
-    // Observe pending control characters (Ctrl+C, etc.)
     var pendingControlChar: UInt8?
-
-    // Interactive mode - when true, keyboard passes through to terminal
     var isInteractiveMode: Bool = false
 
-    func makeNSView(context: Context) -> LocalProcessTerminalView {
-        let terminalView = LocalProcessTerminalView(frame: .zero)
-
-        // Store reference in coordinator
-        context.coordinator.terminalView = terminalView
-
-        // Configure terminal appearance
-        terminalView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
-        terminalView.nativeBackgroundColor = DefaultTheme.shared.background
-        terminalView.nativeForegroundColor = DefaultTheme.shared.foreground
-
-        // Disable mouse reporting - let SwiftTerm handle text selection natively
-        terminalView.allowMouseReporting = false
-
-        // Set delegate for output capture
-        terminalView.processDelegate = context.coordinator
-
-        let workDir = session.workingDirectory.path
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-
-        // Use dtach for session persistence (attach/detach only)
-        let socketPath = Self.socketPath(for: session.id)
-        let dtachCommand = "\(Self.dtachPath) -A \(socketPath) -z \(shell)"
-
-        terminalView.startProcess(
-            executable: shell,
-            args: ["-c", "cd '\(workDir)' && \(dtachCommand)"],
-            environment: buildEnvironment(),
-            execName: "zsh"
-        )
-
-        // Set up shell integration for CWD tracking
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.setupShellIntegration(terminalView)
-        }
-
-        return terminalView
+    func makeNSViewController(context: Context) -> TerminalViewController {
+        let controller = TerminalViewController()
+        controller.session = session
+        controller.coordinator = context.coordinator
+        context.coordinator.terminalView = controller.terminalView
+        return controller
     }
 
-    func updateNSView(_ nsView: LocalProcessTerminalView, context: Context) {
-        // Update coordinator callback
+    func updateNSViewController(_ controller: TerminalViewController, context: Context) {
         context.coordinator.onOutput = onOutput
 
-        // Send pending command if available
         if let command = pendingCommand {
-            nsView.send(txt: command)
+            controller.terminalView.send(txt: command)
             DispatchQueue.main.async {
                 AppState.shared.terminal.pendingCommand = nil
             }
         }
 
-        // Send pending control character if available
         if let controlChar = pendingControlChar {
             let bytes: [UInt8] = [controlChar]
-            nsView.send(data: bytes[...])
+            controller.terminalView.send(data: bytes[...])
             DispatchQueue.main.async {
                 AppState.shared.terminal.pendingControlChar = nil
             }
@@ -87,88 +46,6 @@ struct SwiftTermView: NSViewRepresentable {
         Coordinator(onOutput: onOutput)
     }
 
-    // MARK: - dtach Paths
-
-    /// Socket path for dtach session
-    static func socketPath(for sessionId: UUID) -> String {
-        "/tmp/shebang-\(sessionId.uuidString.prefix(8)).sock"
-    }
-
-    /// Get dtach executable path
-    static var dtachPath: String {
-        if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/dtach") {
-            return "/opt/homebrew/bin/dtach"
-        } else if FileManager.default.fileExists(atPath: "/usr/local/bin/dtach") {
-            return "/usr/local/bin/dtach"
-        }
-        return "/usr/bin/dtach"
-    }
-
-    /// Check if dtach is available
-    static var dtachAvailable: Bool {
-        FileManager.default.fileExists(atPath: "/opt/homebrew/bin/dtach") ||
-        FileManager.default.fileExists(atPath: "/usr/local/bin/dtach") ||
-        FileManager.default.fileExists(atPath: "/usr/bin/dtach")
-    }
-
-    // MARK: - Environment
-
-    private func buildEnvironment() -> [String] {
-        var env = ProcessInfo.processInfo.environment
-        env["TERM"] = "xterm-256color"
-        env["COLORTERM"] = "truecolor"
-        env["LANG"] = "en_US.UTF-8"
-        env.removeValue(forKey: "PWD")
-        env["TERM_PROGRAM"] = "Shebang"
-        env["TERM_PROGRAM_VERSION"] = "1.0"
-        return env.map { "\($0.key)=\($0.value)" }
-    }
-
-    // MARK: - Shell Integration
-
-    /// Set up shell hooks for CWD tracking
-    private func setupShellIntegration(_ terminalView: LocalProcessTerminalView) {
-        // zsh hooks to emit OSC 7 on directory change
-        let hooks = """
-        chpwd() { printf '\\033]7;file://%s%s\\007' "$(hostname)" "$PWD" }
-        precmd() { printf '\\033]7;file://%s%s\\007' "$(hostname)" "$PWD" }
-        printf '\\033]7;file://%s%s\\007' "$(hostname)" "$PWD"
-        clear
-        """
-        terminalView.send(txt: hooks + "\n")
-    }
-
-    // MARK: - Dependencies
-
-    /// Ensure dtach is installed
-    static func ensureDependencies(in terminalView: LocalProcessTerminalView? = nil) {
-        guard !dtachAvailable else { return }
-
-        if let terminal = terminalView {
-            terminal.send(txt: "echo '📦 Installing dtach...' && brew install dtach && echo '✅ Done. Restart Shebang.'\n")
-            return
-        }
-
-        // Background install
-        let brewPath = FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew")
-            ? "/opt/homebrew/bin/brew" : "/usr/local/bin/brew"
-
-        guard FileManager.default.fileExists(atPath: brewPath) else {
-            print("⚠️ Homebrew not installed")
-            return
-        }
-
-        DispatchQueue.global(qos: .background).async {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: brewPath)
-            process.arguments = ["install", "dtach"]
-            try? process.run()
-            process.waitUntilExit()
-        }
-    }
-
-    // MARK: - Coordinator
-
     class Coordinator: NSObject, LocalProcessTerminalViewDelegate {
         var onOutput: ((Data) -> Void)?
         weak var terminalView: LocalProcessTerminalView?
@@ -178,12 +55,10 @@ struct SwiftTermView: NSViewRepresentable {
         }
 
         func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
-
         func setTerminalTitle(source: LocalProcessTerminalView, title: String) {}
 
         func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
             guard let dir = directory else { return }
-
             let url: URL
             if dir.hasPrefix("file://") {
                 if let parsed = URL(string: dir), let path = parsed.path.removingPercentEncoding {
@@ -192,7 +67,6 @@ struct SwiftTermView: NSViewRepresentable {
             } else {
                 url = URL(fileURLWithPath: dir)
             }
-
             DispatchQueue.main.async {
                 AppState.shared.sessions.updateActiveSessionCWD(url)
             }
@@ -202,23 +76,94 @@ struct SwiftTermView: NSViewRepresentable {
             print("Terminal process exited: \(exitCode ?? -1)")
         }
     }
+
+    // MARK: - dtach paths
+
+    static func socketPath(for sessionId: UUID) -> String {
+        "/tmp/shebang-\(sessionId.uuidString.prefix(8)).sock"
+    }
+
+    static var dtachPath: String {
+        if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/dtach") {
+            return "/opt/homebrew/bin/dtach"
+        } else if FileManager.default.fileExists(atPath: "/usr/local/bin/dtach") {
+            return "/usr/local/bin/dtach"
+        }
+        return "/usr/bin/dtach"
+    }
+
+    static var dtachAvailable: Bool {
+        FileManager.default.fileExists(atPath: "/opt/homebrew/bin/dtach") ||
+        FileManager.default.fileExists(atPath: "/usr/local/bin/dtach") ||
+        FileManager.default.fileExists(atPath: "/usr/bin/dtach")
+    }
+
+    static func ensureDependencies(in terminalView: LocalProcessTerminalView? = nil) {
+        guard !dtachAvailable else { return }
+        if let terminal = terminalView {
+            terminal.send(txt: "brew install dtach\n")
+        }
+    }
 }
 
-// MARK: - Theme
+// MARK: - Terminal View Controller
 
-struct DefaultTheme {
-    static let shared = DefaultTheme()
-    let background = NSColor(red: 0.118, green: 0.118, blue: 0.118, alpha: 1.0)
-    let foreground = NSColor(red: 0.800, green: 0.800, blue: 0.800, alpha: 1.0)
+class TerminalViewController: NSViewController {
+    let terminalView = LocalProcessTerminalView(frame: .zero)
+    var session: Session?
+    weak var coordinator: SwiftTermView.Coordinator?
+
+    override func loadView() {
+        view = terminalView
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        guard let session = session else { return }
+
+        // Configure appearance
+        terminalView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        terminalView.nativeBackgroundColor = NSColor(red: 0.118, green: 0.118, blue: 0.118, alpha: 1.0)
+        terminalView.nativeForegroundColor = NSColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0)
+
+        // Disable mouse reporting for native selection
+        terminalView.allowMouseReporting = false
+
+        // Set delegate
+        if let coordinator = coordinator {
+            terminalView.processDelegate = coordinator
+        }
+
+        // Start plain shell
+        let workDir = session.workingDirectory.path
+        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+
+        var env = ProcessInfo.processInfo.environment
+        env["TERM"] = "xterm-256color"
+        env["COLORTERM"] = "truecolor"
+        env["LANG"] = "en_US.UTF-8"
+        env.removeValue(forKey: "PWD")
+
+        terminalView.startProcess(
+            executable: shell,
+            args: ["-l"],
+            environment: env.map { "\($0.key)=\($0.value)" },
+            execName: "zsh"
+        )
+
+        // cd to working directory
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.terminalView.send(txt: "cd '\(workDir)' && clear\n")
+        }
+    }
 }
 
 // MARK: - Preview
 
 #Preview {
     SwiftTermView(
-        session: Session(
-            workingDirectory: FileManager.default.homeDirectoryForCurrentUser
-        )
+        session: Session(workingDirectory: FileManager.default.homeDirectoryForCurrentUser)
     )
     .frame(width: 800, height: 600)
 }
