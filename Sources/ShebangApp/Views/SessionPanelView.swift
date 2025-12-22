@@ -2,11 +2,16 @@
 // Public Domain - https://unlicense.org
 
 import SwiftUI
+import AppKit
 
-/// Right panel displaying session list with controls
+/// Right panel displaying terminal sessions list
 struct SessionPanelView: View {
     private let state = AppState.shared
     @State private var isNewButtonHovered = false
+
+    private var activeSessions: [Session] {
+        state.sessions.sessions.filter { $0.status == .active || $0.status == .idle }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,7 +21,7 @@ struct SessionPanelView: View {
             // Session list
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(state.sessions.sessions) { session in
+                    ForEach(activeSessions) { session in
                         SessionRowView(
                             session: session,
                             isActive: session.id == state.sessions.activeSessionId,
@@ -40,19 +45,18 @@ struct SessionPanelView: View {
 
     private var header: some View {
         HStack {
-            // Vibe check header
             VStack(alignment: .leading, spacing: 2) {
                 Text("sessions")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .textCase(.lowercase)
-                Text("\(state.sessions.sessions.count) active")
+                Text("\(activeSessions.count) active")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            // New session button - VS Code style
+            // New session button
             Button {
                 state.sessions.createSession()
             } label: {
@@ -69,7 +73,14 @@ struct SessionPanelView: View {
             }
             .buttonStyle(.plain)
             .opacity(isNewButtonHovered ? 0.8 : 1.0)
-            .onHover { isNewButtonHovered = $0 }
+            .onHover { hovering in
+                isNewButtonHovered = hovering
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
             .help("New Session")
         }
         .padding(.horizontal, 16)
@@ -191,6 +202,82 @@ struct SessionRowView: View {
             return .gray
         case .terminated:
             return .red
+        }
+    }
+}
+
+// MARK: - Closed Session Row
+
+struct ClosedSessionRowView: View {
+    let session: Session
+    let onReopen: () -> Void
+    let onDelete: () -> Void
+
+    @State private var isHovering = false
+    @State private var isDeleteHovered = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Folder icon for closed sessions
+            Image(systemName: "folder.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+
+            // Project name (directory name)
+            Text(session.directoryName)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .lineLimit(1)
+
+            Spacer()
+
+            // Reopen/Delete buttons on hover
+            if isHovering {
+                HStack(spacing: 4) {
+                    // Reopen button
+                    Button {
+                        onReopen()
+                    } label: {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(6)
+                            .background(Color.Shebang.accentPrimary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reopen Project")
+
+                    // Delete button
+                    Button {
+                        onDelete()
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(isDeleteHovered ? .white : .secondary)
+                            .padding(6)
+                            .background(
+                                Circle()
+                                    .fill(isDeleteHovered ? Color.red : Color.clear)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { isDeleteHovered = $0 }
+                    .help("Remove from History")
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(isHovering ? Color.Shebang.bgTertiary : Color.Shebang.bgSecondary.opacity(0.5))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onReopen()
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
+            }
         }
     }
 }

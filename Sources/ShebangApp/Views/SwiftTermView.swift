@@ -36,6 +36,10 @@ struct SwiftTermView: NSViewRepresentable {
         terminalView.nativeBackgroundColor = DefaultTheme.shared.background
         terminalView.nativeForegroundColor = DefaultTheme.shared.foreground
 
+        // Disable mouse reporting so mouse events are used for text selection
+        // instead of being sent to terminal apps (like tmux) as escape sequences
+        terminalView.allowMouseReporting = false
+
         // Set delegate for output capture
         terminalView.processDelegate = context.coordinator
 

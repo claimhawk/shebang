@@ -6,41 +6,83 @@ Usage:
     python3 new-project.py --name "My Project" --description "Description" --path /path/to/create
 
 This creates:
-    <path>/<project-name>/.shebang/
-        kanban.json     - Empty kanban board
-        metrics.json    - Zeroed metrics
-        config.yaml     - Project configuration
+    <path>/<project-name>/
+        .shebang/           - Full Shebang tooling layer (docs, web, templates, etc.)
+        .claude/            - Claude Code configuration
+        README.md           - Project readme
+        CLAUDE.md           - Agent instructions
+        .gitignore          - Git ignore file
 """
+
+from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Find Shebang root (where this script lives is scripts/)
 SCRIPT_DIR = Path(__file__).parent
 SHEBANG_ROOT = SCRIPT_DIR.parent
-TEMPLATES_DIR = SHEBANG_ROOT / 'templates' / 'project' / '.shebang'
+SHEBANG_DOCS_DIR = SHEBANG_ROOT / '.shebang'  # Full Shebang tooling layer
 CLAUDE_DIR = SHEBANG_ROOT / '.claude'
+TEMPLATES_DIR = SHEBANG_ROOT / 'templates' / 'project' / '.shebang'
+
+# Files/folders to exclude when copying .shebang/
+SHEBANG_EXCLUDE = [
+    '*.local.*',      # Local-only files
+    '__pycache__',    # Python cache
+    '.DS_Store',      # macOS files
+]
 
 
 def slugify(name: str) -> str:
     """Convert project name to kebab-case slug."""
-    # Lowercase
     slug = name.lower()
-    # Replace spaces and underscores with hyphens
     slug = re.sub(r'[\s_]+', '-', slug)
-    # Remove non-alphanumeric (except hyphens)
     slug = re.sub(r'[^a-z0-9-]', '', slug)
-    # Remove consecutive hyphens
     slug = re.sub(r'-+', '-', slug)
-    # Strip leading/trailing hyphens
     slug = slug.strip('-')
     return slug or 'project'
+
+
+def should_exclude(path: Path) -> bool:
+    """Check if a path should be excluded from copying."""
+    name = path.name
+    for pattern in SHEBANG_EXCLUDE:
+        if pattern.startswith('*'):
+            if pattern[1:] in name:
+                return True
+        elif name == pattern:
+            return True
+    return False
+
+
+def copy_shebang_folder(src_dir: Path, dest_dir: Path) -> None:
+    """Copy .shebang folder, excluding local files."""
+    if not src_dir.exists():
+        return
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    for item in src_dir.iterdir():
+        if should_exclude(item):
+            continue
+
+        dest_path = dest_dir / item.name
+
+        if item.is_dir():
+            shutil.copytree(
+                item,
+                dest_path,
+                ignore=shutil.ignore_patterns(*SHEBANG_EXCLUDE)
+            )
+        else:
+            shutil.copy2(item, dest_path)
 
 
 def create_project(
@@ -49,12 +91,12 @@ def create_project(
     project_type: str = '',
     tech_stack: str = '',
     target_path: str = '.'
-) -> tuple[bool, str, Path]:
+) -> tuple[bool, str, Optional[Path]]:
     """Create a new project structure."""
 
-    # Validate templates exist
-    if not TEMPLATES_DIR.exists():
-        return False, f"Templates not found at {TEMPLATES_DIR}", None
+    # Validate .shebang source exists
+    if not SHEBANG_DOCS_DIR.exists():
+        return False, f"Shebang docs not found at {SHEBANG_DOCS_DIR}", None
 
     # Generate slug
     project_slug = slugify(name)
@@ -68,32 +110,26 @@ def create_project(
         return False, f"Directory already exists: {project_dir}", None
 
     try:
-        # Create directories
-        shebang_dir.mkdir(parents=True)
+        # Create project directory
+        project_dir.mkdir(parents=True)
 
-        # Copy template files
-        for template_file in ['kanban.json', 'metrics.json']:
-            src = TEMPLATES_DIR / template_file
-            if src.exists():
-                shutil.copy(src, shebang_dir / template_file)
+        # Copy entire .shebang folder (docs, web, templates, examples, etc.)
+        copy_shebang_folder(SHEBANG_DOCS_DIR, shebang_dir)
+
+        # Copy template files (kanban.json, metrics.json) to overwrite with clean versions
+        if TEMPLATES_DIR.exists():
+            for template_file in ['kanban.json', 'metrics.json']:
+                src = TEMPLATES_DIR / template_file
+                if src.exists():
+                    shutil.copy(src, shebang_dir / template_file)
 
         # Create config.yaml with project info
-        config = {
-            'name': name,
-            'description': description,
-            'created': datetime.now().isoformat(),
-            'type': project_type,
-            'tech_stack': tech_stack,
-            'tags': [t.strip() for t in project_type.split(',') if t.strip()]
-        }
-
-        # Write config as YAML
         config_content = f"""name: "{name}"
 description: "{description}"
-created: "{config['created']}"
+created: "{datetime.now().isoformat()}"
 type: "{project_type}"
 tech_stack: "{tech_stack}"
-tags: {json.dumps(config['tags'])}
+tags: {json.dumps([t.strip() for t in project_type.split(',') if t.strip()])}
 """
         (shebang_dir / 'config.yaml').write_text(config_content)
 
@@ -119,16 +155,13 @@ tags: {json.dumps(config['tags'])}
         # Copy .claude folder with skills, commands, and hooks
         if CLAUDE_DIR.exists():
             project_claude_dir = project_dir / '.claude'
-            shutil.copytree(CLAUDE_DIR, project_claude_dir)
-            # Remove any local-only files that shouldn't be copied
-            for local_file in project_claude_dir.glob('*.local.*'):
-                local_file.unlink()
-            # Remove implementation folder (project-specific)
-            impl_dir = project_claude_dir / 'implementation'
-            if impl_dir.exists():
-                shutil.rmtree(impl_dir)
+            shutil.copytree(
+                CLAUDE_DIR,
+                project_claude_dir,
+                ignore=shutil.ignore_patterns('*.local.*', 'implementation', '__pycache__')
+            )
 
-        # Create a README.md stub
+        # Create README.md
         readme_content = f"""# {name}
 
 {description}
@@ -143,7 +176,7 @@ This project was created with [Shebang!](https://github.com/MichaelONeal/Shebang
 
 ```bash
 # Start the Shebang dashboard
-python3 /path/to/Shebang/web/server.py
+python3 .shebang/web/server.py
 
 # Open http://localhost:8080 to see your project
 ```
@@ -158,9 +191,52 @@ python3 /path/to/Shebang/web/server.py
 """
         (project_dir / 'README.md').write_text(readme_content)
 
+        # Create CLAUDE.md
+        claude_md_content = f"""# CLAUDE.md — Agent Operating Manual
+
+This file provides guidance to AI agents working in this repository.
+
+## Project: {name}
+
+{description}
+
+## Quick Reference
+
+| What | Where |
+|------|-------|
+| **Best practices** | `.shebang/BEST_PRACTICES.md` |
+| **Anti-patterns** | `.shebang/ANTI_PATTERNS.md` |
+| **Code standards** | `.shebang/CODE_QUALITY.md` |
+| **Agent workflow** | `.shebang/system.md` |
+| **Documentation** | `.shebang/docs/` |
+| **Dashboard** | `.shebang/web/server.py` |
+
+## Commands
+
+```bash
+# Start dashboard
+python3 .shebang/web/server.py
+
+# View at http://localhost:8080
+```
+
+## Code Standards
+
+- Follow existing patterns in the codebase
+- Write tests for new functionality
+- Keep functions small and focused
+
+## Git Commits
+
+- Use conventional commit messages
+- Keep commits atomic and focused
+"""
+        (project_dir / 'CLAUDE.md').write_text(claude_md_content)
+
         # Create .gitignore
         gitignore_content = """# Shebang local data
 .shebang/*.local.*
+.shebang/web/data/*.local.json
 
 # Common ignores
 node_modules/
@@ -172,8 +248,15 @@ __pycache__/
 *.log
 dist/
 build/
+.venv/
+venv/
 """
         (project_dir / '.gitignore').write_text(gitignore_content)
+
+        # Copy PHILOSOPHY.md to root (the design contract)
+        philosophy_src = SHEBANG_ROOT / 'PHILOSOPHY.md'
+        if philosophy_src.exists():
+            shutil.copy2(philosophy_src, project_dir / 'PHILOSOPHY.md')
 
         return True, f"Project created at {project_dir}", project_dir
 
@@ -218,15 +301,21 @@ def main():
             print()
             print("Created:")
             print(f"  {project_path}/")
-            print(f"  {project_path}/.shebang/     (kanban, metrics, config)")
-            print(f"  {project_path}/.claude/      (skills, commands, hooks)")
-            print(f"  {project_path}/README.md")
-            print(f"  {project_path}/.gitignore")
-            print(f"  {project_path}/.gitignore")
+            print(f"  ├── .shebang/        (full Shebang tooling)")
+            print(f"  │   ├── docs/        (documentation)")
+            print(f"  │   ├── web/         (dashboard server)")
+            print(f"  │   ├── templates/   (project templates)")
+            print(f"  │   └── *.md         (best practices, testing, etc.)")
+            print(f"  ├── .claude/         (skills, commands, hooks)")
+            print(f"  ├── CLAUDE.md        (agent instructions)")
+            print(f"  ├── PHILOSOPHY.md    (design contract)")
+            print(f"  ├── README.md")
+            print(f"  └── .gitignore")
             print()
             print("Next steps:")
             print(f"  cd {project_path.name}")
             print(f"  git init")
+            print(f"  python3 .shebang/web/server.py  # Start dashboard")
             print()
         else:
             print(f"✗ {message}", file=sys.stderr)

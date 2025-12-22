@@ -30,6 +30,7 @@ enum ToolsInstaller {
         3. Git (via Homebrew if needed)
         4. Node.js and npm (via Homebrew)
         5. Python 3 (via Homebrew)
+        6. dtach (via Homebrew) - for terminal session persistence
 
         For each step:
         - Check if already installed
@@ -90,7 +91,8 @@ enum ToolsInstaller {
         4. Git (with version)
         5. Node.js and npm (with versions)
         6. Python (with version)
-        7. Claude Code (with version)
+        7. dtach (for session persistence)
+        8. Claude Code (with version)
 
         Format as a clear status report showing:
         - Tool name

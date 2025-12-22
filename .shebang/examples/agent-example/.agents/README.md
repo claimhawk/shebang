@@ -362,7 +362,7 @@ All agents work on the same feature branch.
 
 - **Design Document:** `/docs/design/AGENTS.md` - Full specification
 - **Philosophy:** `/PHILOSOPHY.md` - Why we build this way
-- **Agent System Protocol:** `/agent/system.md` - Workflow template
+- **Agent System Protocol:** `/.shebang/system.md` - Workflow template
 - **Example Project:** `/agent/examples/python-example/` - Complete project structure
 
 ---

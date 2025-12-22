@@ -195,7 +195,11 @@ def get_project_path(project_name: str = None):
 
 
 def discover_projects():
-    """Discover all projects in the projects directory."""
+    """Discover all projects in the projects directory.
+
+    A shebang project is identified by having a system.md file in the project root.
+    Project metadata is read from .shebang/config.yaml if available.
+    """
     import yaml
     projects = []
     if not PROJECTS_DIR.exists():
@@ -203,9 +207,11 @@ def discover_projects():
 
     for project_dir in sorted(PROJECTS_DIR.iterdir()):
         if project_dir.is_dir():
-            shebang_dir = project_dir / '.shebang'
-            if shebang_dir.exists():
-                config_file = shebang_dir / 'config.yaml'
+            # Check for system.md to identify shebang projects
+            system_md = project_dir / 'system.md'
+            if system_md.exists():
+                # Try to read config from .shebang/config.yaml if available
+                config_file = project_dir / '.shebang' / 'config.yaml'
                 if config_file.exists():
                     try:
                         config = yaml.safe_load(config_file.read_text())
@@ -224,6 +230,15 @@ def discover_projects():
                             'created': '',
                             'tags': []
                         })
+                else:
+                    # No config.yaml, just use directory name
+                    projects.append({
+                        'id': project_dir.name,
+                        'name': project_dir.name,
+                        'description': '',
+                        'created': '',
+                        'tags': []
+                    })
     return projects
 
 

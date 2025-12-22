@@ -113,10 +113,15 @@ struct FavoriteCard: View {
             isHovered = hovering
         }
         .onTapGesture {
-            // Navigate to this folder by sending cd command to terminal
-            let path = folder.path
-            let escapedPath = path.replacingOccurrences(of: "'", with: "'\\''")
-            state.terminal.sendCommand("cd '\(escapedPath)'")
+            // Find or create a session for this folder
+            if let existingSession = state.sessions.sessions.first(where: {
+                $0.workingDirectory.path == folder.path && $0.status != .terminated
+            }) {
+                state.sessions.selectSession(existingSession)
+            } else {
+                state.sessions.createSession(name: folder.lastPathComponent, at: folder)
+            }
+            state.ui.trackProject(folder)
 
             // Close the drawer after navigation
             state.ui.favoritesDrawerOpen = false

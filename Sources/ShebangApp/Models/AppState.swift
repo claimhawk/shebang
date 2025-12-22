@@ -52,6 +52,15 @@ final class AppState {
 
         // Load persisted state
         sessions.loadFromDisk()
+        ui.loadRecentProjects()
+        ui.loadFavorites()
+
+        // Seed recent projects from existing sessions if empty
+        if ui.recentProjects.isEmpty {
+            for session in sessions.sessions.sorted(by: { $0.lastActiveAt > $1.lastActiveAt }) {
+                ui.trackProject(session.workingDirectory)
+            }
+        }
     }
 
     // MARK: - Hot Reload Support
@@ -141,9 +150,15 @@ final class SessionState {
     }
 
     private func createDefaultSession() {
+        // Default to Shebang repo folder if it exists, otherwise home directory
+        let shebangRepo = URL(fileURLWithPath: "/Users/michaeloneal/development/Shebang")
+        let defaultDir = FileManager.default.fileExists(atPath: shebangRepo.path)
+            ? shebangRepo
+            : FileManager.default.homeDirectoryForCurrentUser
+
         let session = Session(
             name: "Session 1",
-            workingDirectory: FileManager.default.homeDirectoryForCurrentUser
+            workingDirectory: defaultDir
         )
         sessions = [session]
         activeSessionId = session.id
@@ -163,25 +178,333 @@ final class SessionState {
         return session
     }
 
+    /// Create a new project folder at the specified parent location
+    /// Sets up shebang files (system.md, etc.) and creates a session
+    @discardableResult
+    func createProjectAtLocation(parentDir: URL, name: String) -> Session {
+        // Create project folder
+        let projectDir = parentDir.appendingPathComponent(name, isDirectory: true)
+        try? FileManager.default.createDirectory(at: projectDir, withIntermediateDirectories: true)
+
+        // Set up shebang files
+        setupShebangFiles(in: projectDir, projectName: name)
+
+        // Create session for this project
+        let session = Session(
+            name: name,
+            workingDirectory: projectDir
+        )
+        sessions.append(session)
+        activeSessionId = session.id
+        saveToDisk()
+        return session
+    }
+
+    /// Set up initial shebang project files
+    private func setupShebangFiles(in projectDir: URL, projectName: String) {
+        let dateFormatter = ISO8601DateFormatter()
+        let now = dateFormatter.string(from: Date())
+
+        // Extract the bundled shebang.zip containing the full .shebang knowledge base
+        // This includes: ANTI_PATTERNS.md, BEST_PRACTICES.md, system.md, docs/, web/, etc.
+        extractShebangArchive(to: projectDir)
+
+        let shebangDir = projectDir.appendingPathComponent(".shebang", isDirectory: true)
+
+        // Ensure .shebang directory exists (in case zip extraction failed)
+        try? FileManager.default.createDirectory(at: shebangDir, withIntermediateDirectories: true)
+
+        // Create .claude directory for Claude Code settings
+        let claudeDir = projectDir.appendingPathComponent(".claude", isDirectory: true)
+        try? FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+
+        // Create .claude/settings.json with default project settings
+        let claudeSettings = """
+        {
+          "permissions": {
+            "allow": ["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
+            "deny": []
+          }
+        }
+        """
+        try? claudeSettings.write(to: claudeDir.appendingPathComponent("settings.json"), atomically: true, encoding: .utf8)
+
+        // Create kanban.json for task tracking (overwrites template with timestamps)
+        let kanban = """
+        {
+          "lastUpdated": "\(now)",
+          "columns": [
+            {"id": "backlog", "name": "BACKLOG", "color": "accent", "tasks": []},
+            {"id": "in_progress", "name": "IN PROGRESS", "color": "warning", "tasks": []},
+            {"id": "review", "name": "REVIEW", "color": "purple", "tasks": []},
+            {"id": "done", "name": "DONE", "color": "success", "tasks": []}
+          ]
+        }
+        """
+        try? kanban.write(to: shebangDir.appendingPathComponent("kanban.json"), atomically: true, encoding: .utf8)
+
+        // Create metrics.json for productivity tracking (overwrites template with timestamps)
+        let metrics = """
+        {
+          "lastUpdated": "\(now)",
+          "productivity": {"multiplier": 0, "linesPerHour": 0, "baseline": 20},
+          "codebase": {"totalLines": 0, "commits": 0, "features": {"completed": 0, "inProgress": 0, "planned": 0, "total": 0}},
+          "timeline": {"startDate": "\(now)", "activeHours": 0, "calendarHours": 0}
+        }
+        """
+        try? metrics.write(to: shebangDir.appendingPathComponent("metrics.json"), atomically: true, encoding: .utf8)
+
+        // Create config.yaml with project-specific metadata
+        let config = """
+        name: "\(projectName)"
+        description: "A new Shebang project"
+        created: "\(now)"
+        tags: []
+        """
+        try? config.write(to: shebangDir.appendingPathComponent("config.yaml"), atomically: true, encoding: .utf8)
+
+        // Note: system.md is already in .shebang/ from the zip extraction
+        // It contains the full agent workflow protocol, not project-specific content
+
+        // Create CLAUDE.md with Claude Code instructions
+        let claudeMd = """
+        # CLAUDE.md
+
+        This file provides guidance to Claude Code when working with this project.
+
+        ## Project: \(projectName)
+
+        ## Quick Start
+        ```bash
+        # Add setup commands here
+        ```
+
+        ## Architecture
+        [Describe key components]
+
+        ## Code Standards
+        - Follow existing patterns in the codebase
+        - Write tests for new functionality
+        - Keep functions small and focused
+
+        ## Git Commits
+        - Use conventional commit messages
+        - Keep commits atomic and focused
+
+        ## Shebang Knowledge Base
+        See `.shebang/` for comprehensive development guidelines:
+        - `ANTI_PATTERNS.md` - What NOT to do
+        - `BEST_PRACTICES.md` - Engineering guidelines
+        - `CODE_QUALITY.md` - Language-specific standards
+        - `system.md` - Agent workflow protocol
+        """
+        try? claudeMd.write(to: projectDir.appendingPathComponent("CLAUDE.md"), atomically: true, encoding: .utf8)
+
+        // Create README.md
+        let readme = """
+        # \(projectName)
+
+        > Created with [Shebang!](https://github.com/anthropics/shebang) - Automated Development Environment
+
+        ## Overview
+        [Project description]
+
+        ## Getting Started
+        ```bash
+        # Installation steps
+        ```
+
+        ## Development
+        This project uses Shebang for AI-assisted development. The `.shebang/` folder contains:
+        - `kanban.json` - Task tracking
+        - `metrics.json` - Productivity metrics
+        - `config.yaml` - Project configuration
+        - `ANTI_PATTERNS.md` - What NOT to do (65 years of wisdom)
+        - `BEST_PRACTICES.md` - Engineering guidelines
+        - `docs/` - Full documentation
+        - `web/` - Documentation web server
+
+        ## License
+        [Choose a license]
+        """
+        try? readme.write(to: projectDir.appendingPathComponent("README.md"), atomically: true, encoding: .utf8)
+
+        // Create .gitignore with common patterns
+        let gitignore = """
+        # Dependencies
+        node_modules/
+        .venv/
+        venv/
+        __pycache__/
+
+        # Build
+        .build/
+        dist/
+        build/
+        *.egg-info/
+
+        # IDE
+        .idea/
+        .vscode/
+        *.swp
+        *.swo
+
+        # OS
+        .DS_Store
+        Thumbs.db
+
+        # Environment
+        .env
+        .env.local
+        .env.*.local
+
+        # Logs
+        *.log
+        logs/
+        """
+        try? gitignore.write(to: projectDir.appendingPathComponent(".gitignore"), atomically: true, encoding: .utf8)
+
+        // Initialize git repository
+        let process = Process()
+        process.currentDirectoryURL = projectDir
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.arguments = ["init", "-q"]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
+        process.waitUntilExit()
+    }
+
+    /// Extract the bundled shebang.zip to the project directory
+    private func extractShebangArchive(to projectDir: URL) {
+        // Find the shebang.zip in the app bundle
+        guard let zipURL = Bundle.module.url(forResource: "shebang", withExtension: "zip") else {
+            print("Warning: shebang.zip not found in bundle, falling back to minimal setup")
+            return
+        }
+
+        // Use unzip command to extract the archive
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        process.arguments = ["-q", "-o", zipURL.path, "-d", projectDir.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            if process.terminationStatus != 0 {
+                print("Warning: Failed to extract shebang.zip (exit code: \(process.terminationStatus))")
+            }
+        } catch {
+            print("Warning: Failed to run unzip: \(error)")
+        }
+    }
+
     func closeSession(_ session: Session) {
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
 
-        // Switch active session before removing
+        // Kill the dtach process and clean up socket
+        killDtachSession(for: session)
+
+        // Mark as terminated instead of deleting (preserves history)
+        sessions[index].status = .terminated
+        sessions[index].touch()
+
+        // Switch active session if this was active
         if activeSessionId == session.id {
-            // Find another session to switch to
-            let otherSessions = sessions.filter { $0.id != session.id }
-            activeSessionId = otherSessions.first?.id
-        }
-
-        // Remove the session entirely
-        sessions.remove(at: index)
-
-        // If no sessions left, create a new default one
-        if sessions.isEmpty {
-            createDefaultSession()
+            // Find another active/idle session to switch to
+            let otherActiveSessions = sessions.filter {
+                $0.id != session.id && ($0.status == .active || $0.status == .idle)
+            }
+            activeSessionId = otherActiveSessions.first?.id
+            // If no active sessions, leave activeSessionId as nil
+            // User must explicitly create a new session via the UI
         }
 
         saveToDisk()
+    }
+
+    /// Kill the dtach process for a session and remove its socket file
+    /// IMPORTANT: Only kills the dtach master process, NOT child processes
+    private func killDtachSession(for session: Session) {
+        let socketPath = "/tmp/shebang-\(session.id.uuidString.prefix(8)).sock"
+
+        // First check if socket exists
+        guard FileManager.default.fileExists(atPath: socketPath) else {
+            return
+        }
+
+        // Find the dtach master process for THIS specific socket
+        // lsof syntax: lsof <filename> finds processes using that exact file
+        // NOTE: Do NOT use -U flag - it filters to ALL unix sockets system-wide!
+        let findProcess = Process()
+        findProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        findProcess.arguments = ["-t", socketPath]  // -t = PIDs only, no -U flag!
+
+        let pipe = Pipe()
+        findProcess.standardOutput = pipe
+        findProcess.standardError = FileHandle.nullDevice
+
+        do {
+            try findProcess.run()
+            findProcess.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !output.isEmpty {
+                // Get PIDs - there should typically be just one (the dtach master)
+                let pids = output.split(separator: "\n")
+                    .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+
+                // Only kill the FIRST pid (dtach master process)
+                // When dtach dies, it sends SIGHUP to children which gracefully terminates them
+                if let dtachPid = pids.first {
+                    // Use SIGTERM (graceful) not SIGKILL
+                    let killProcess = Process()
+                    killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                    killProcess.arguments = ["-TERM", String(dtachPid)]
+                    killProcess.standardOutput = FileHandle.nullDevice
+                    killProcess.standardError = FileHandle.nullDevice
+                    try? killProcess.run()
+                    killProcess.waitUntilExit()
+                }
+            }
+        } catch {
+            // lsof failed - just remove the socket file
+        }
+
+        // Remove the socket file
+        try? FileManager.default.removeItem(atPath: socketPath)
+    }
+
+    /// Reopen a terminated session
+    func reopenSession(_ session: Session) {
+        guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
+        sessions[index].status = .active
+        sessions[index].touch()
+        activeSessionId = session.id
+        saveToDisk()
+    }
+
+    /// Permanently delete a session from history
+    func deleteSession(_ session: Session) {
+        sessions.removeAll { $0.id == session.id }
+
+        // If we deleted the active session, clear the active ID
+        if activeSessionId == session.id {
+            activeSessionId = activeSessions.first?.id
+        }
+
+        // Don't auto-create - let user explicitly create new sessions
+        saveToDisk()
+    }
+
+    /// Get recently closed sessions (for history)
+    var closedSessions: [Session] {
+        sessions.filter { $0.status == .terminated }
+            .sorted { $0.lastActiveAt > $1.lastActiveAt }
     }
 
     func selectSession(_ session: Session) {
@@ -193,7 +516,10 @@ final class SessionState {
         guard let index = sessions.firstIndex(where: { $0.id == activeSessionId }) else { return }
         sessions[index].workingDirectory = url
         sessions[index].touch()
-        // Don't save to disk on every cd - too noisy
+        // Save to disk so CWD persists across restarts
+        saveToDisk()
+        // Track as recent project
+        AppState.shared.ui.trackProject(url)
     }
 }
 
@@ -207,30 +533,77 @@ final class UIState {
     var filePreviewOpen = false
     var favoritesDrawerOpen = false
 
+    // Project picker - now handled in sidebar
+    var showProjectPicker = false
+
     // Display mode
     var displayMode: DisplayMode = .interactive
 
     // File preview
     var previewingFile: URL?
 
-    // Command input
-    var commandInput = ""
-    var commandHistory: [String] = []
-    var historyIndex: Int?
+    // Recent projects (directories that have been opened)
+    var recentProjects: [URL] = []
 
     // Favorites
     var favoriteFolders: [URL] = []
 
-    // MARK: - Favorites Persistence
+    // MARK: - App Support Directory
 
-    private var favoritesURL: URL {
+    private var appSupportDir: URL {
         let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!
         let dir = appSupport.appendingPathComponent("Shebang", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("favorites.json")
+        return dir
+    }
+
+    // MARK: - Recent Projects Persistence
+
+    private var recentProjectsURL: URL {
+        appSupportDir.appendingPathComponent("recent_projects.json")
+    }
+
+    func loadRecentProjects() {
+        guard FileManager.default.fileExists(atPath: recentProjectsURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: recentProjectsURL)
+            let paths = try JSONDecoder().decode([String].self, from: data)
+            recentProjects = paths.map { URL(fileURLWithPath: $0) }
+        } catch {
+            print("Failed to load recent projects: \(error)")
+        }
+    }
+
+    func saveRecentProjects() {
+        do {
+            let paths = recentProjects.map { $0.path }
+            let data = try JSONEncoder().encode(paths)
+            try data.write(to: recentProjectsURL, options: .atomic)
+        } catch {
+            print("Failed to save recent projects: \(error)")
+        }
+    }
+
+    /// Track a project directory as recently used (moves to front of list)
+    func trackProject(_ url: URL) {
+        // Remove if already in list
+        recentProjects.removeAll { $0.path == url.path }
+        // Add to front
+        recentProjects.insert(url, at: 0)
+        // Keep max 20
+        if recentProjects.count > 20 {
+            recentProjects = Array(recentProjects.prefix(20))
+        }
+        saveRecentProjects()
+    }
+
+    // MARK: - Favorites Persistence
+
+    private var favoritesURL: URL {
+        appSupportDir.appendingPathComponent("favorites.json")
     }
 
     func loadFavorites() {

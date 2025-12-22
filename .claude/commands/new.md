@@ -129,6 +129,6 @@ To start working:
   cd my-e-commerce-app
 
 To view the dashboard:
-  python3 /path/to/Shebang/web/server.py
+  python3 .shebang/web/server.py
   Open http://localhost:8080
 ```

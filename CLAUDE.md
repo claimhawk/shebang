@@ -10,12 +10,12 @@ This is the primary instruction file for AI agents (Claude Code, Gemini CLI, etc
 
 | What | Where |
 |------|-------|
-| **What to do** | `agent/BEST_PRACTICES.md` |
-| **What NOT to do** | `agent/ANTI_PATTERNS.md` |
-| **Python standards** | `agent/CODE_QUALITY.md` |
-| **Agent workflow** | `agent/system.md` |
-| **Project templates** | `agent/templates/` |
-| **Communication style** | `agent/VOICE.md` |
+| **What to do** | `.shebang/BEST_PRACTICES.md` |
+| **What NOT to do** | `.shebang/ANTI_PATTERNS.md` |
+| **Python standards** | `.shebang/CODE_QUALITY.md` |
+| **Agent workflow** | `.shebang/system.md` |
+| **Project templates** | `.shebang/templates/` |
+| **Communication style** | `.shebang/VOICE.md` |
 | **Why we build this way** | `PHILOSOPHY.md` |
 | **Hook configuration** | `.claude/settings.json` |
 
@@ -23,8 +23,8 @@ This is the primary instruction file for AI agents (Claude Code, Gemini CLI, etc
 
 ## The Contract
 
-1. **Write correct code the first time** — Use the wisdom in `agent/`
-2. **Always write tests** — No code ships without tests. See `agent/TESTING.md`
+1. **Write correct code the first time** — Use the wisdom in `.shebang/`
+2. **Always write tests** — No code ships without tests. See `.shebang/TESTING.md`
 3. **If you mess up, hooks will block you** — Read the error, fix the issue
 4. **Learn from corrections** — Don't repeat the same mistake
 
@@ -43,10 +43,10 @@ The hooks enforce:
 Read `PHILOSOPHY.md`. This isn't just documentation — it's the design contract. Features that don't align with the philosophy won't be accepted.
 
 ### 2. Know the Anti-Patterns
-Read `agent/ANTI_PATTERNS.md`. 65 years of LISP wisdom distilled. These patterns will get blocked by hooks anyway, so learn them upfront.
+Read `.shebang/ANTI_PATTERNS.md`. 65 years of LISP wisdom distilled. These patterns will get blocked by hooks anyway, so learn them upfront.
 
 ### 3. Follow the Standards
-Read `agent/CODE_QUALITY.md` for language-specific requirements:
+Read `.shebang/CODE_QUALITY.md` for language-specific requirements:
 - Python: Type hints, ruff, mypy, max complexity 10
 - TypeScript: Strict mode, no `any`, ESLint + Prettier
 - Swift: SwiftLint, proper optionals
@@ -172,14 +172,20 @@ Sources/ShebangApp/           # macOS app (Swift/SwiftUI)
 ├── Views/                    # UI components
 └── Services/                 # Business logic
 
-agent/                        # Agent knowledge base
+.shebang/                     # Shebang tooling layer
 ├── ANTI_PATTERNS.md          # What NOT to do (65 years of wisdom)
 ├── BEST_PRACTICES.md         # What to do
 ├── CODE_QUALITY.md           # Language-specific standards
 ├── VOICE.md                  # Communication style
 ├── system.md                 # Agent workflow template
 ├── templates/                # Project scaffolds
-└── examples/                 # Working example projects
+├── examples/                 # Working example projects
+├── docs/                     # Documentation
+│   ├── ROADMAP.md            # Project roadmap
+│   ├── FEATURES.md           # Feature inventory
+│   └── PHILOSOPHY.md         # Design philosophy
+└── web/                      # Dashboard server
+    └── server.py             # Local web dashboard
 
 scripts/guardrails/           # Hook validators
 ├── config.yaml               # All patterns centralized
@@ -189,8 +195,6 @@ scripts/guardrails/           # Hook validators
 .claude/                      # Claude configuration
 ├── settings.json             # Hook config
 └── hookify.*.local.md        # Content-based rules
-
-docs/                         # Human documentation
 ```
 
 ---

@@ -26,34 +26,19 @@ open Shebang.app
 
 Or build manually with `xcodebuild -scheme Shebang -configuration Release`.
 
-The app opens with a terminal and a command bar at the bottom. That's it! You're ready to go.
+The app opens with a terminal running Claude Code. That's it! You're ready to go.
 
 ### First Look
 
 When you open Shebang, you'll see:
 
 - **Left sidebar**: Browse files in your current folder
-- **Center**: A terminal showing what's happening
+- **Center**: A terminal with Claude Code running
 - **Right panel**: Your active sessions (like browser tabs, but for work)
-- **Bottom**: The command bar — this is where the magic happens
 
-## The Command Bar: Your New Best Friend
+## Working with Claude Code
 
-The command bar is at the bottom of the window. It shows you where you are:
-
-```
-yourname in Documents on main ❯
-```
-
-This tells you:
-- **yourname**: Your username
-- **Documents**: The folder you're currently in
-- **main**: Your current git branch (if you're in a git project)
-- **❯**: Ready for your input
-
-### How to Use It
-
-Just type what you want to do and press **Shift+Enter**:
+Claude Code runs directly in the terminal. Just type what you want to do:
 
 ```
 what files are in this folder?
@@ -68,13 +53,6 @@ what changed since yesterday?
 ```
 
 The AI will understand what you mean and do it for you.
-
-### Enter vs Shift+Enter
-
-- **Enter**: Adds a new line (for longer questions)
-- **Shift+Enter**: Sends your message
-
-This lets you write multi-line questions if you need to explain something in detail.
 
 ## Talking to the AI
 
@@ -119,10 +97,7 @@ Sessions are like tabs in a web browser, but for different projects or tasks.
 
 ### Creating Sessions
 
-Click the **+ new** button in the right panel, or type:
-```
-/new
-```
+Click the **+ new** button in the right panel to create a new session.
 
 Each session has its own:
 - Working directory
@@ -146,18 +121,7 @@ Don't worry — you can't close the last session. Shebang will always keep at le
 
 ### Adding Favorites
 
-When you're in a folder you visit often, type:
-```
-/favorite
-```
-
-or
-
-```
-/fav
-```
-
-This saves the folder to your favorites.
+Right-click on a folder in the sidebar and select "Add to Favorites" to save frequently-visited folders.
 
 ### Viewing Favorites
 
@@ -171,29 +135,21 @@ Hover over a favorite card and click the **X** that appears.
 
 ## Git Integration
 
-If you're in a git repository, the command bar shows your git status:
+Shebang detects when you're in a git repository. Ask Claude Code about your git status naturally:
 
-```
-yourname in my-project on main [✓2 ●3 +1] ❯
-```
+- "what's the git status?"
+- "show me the diff"
+- "commit my changes"
 
-This means:
-- **✓2**: 2 staged files (ready to commit)
-- **●3**: 3 modified files (changed but not staged)
-- **+1**: 1 new file (untracked)
-
-The prompt symbol ❯ turns yellow when you have changes, so you always know if you have uncommitted work.
+Claude Code understands git and can help you with branches, merges, rebases, and more.
 
 ## Keyboard Shortcuts
 
-### Command Bar
-- **Shift+Enter**: Send your message
-- **Enter**: New line
-- **Tab**: Auto-complete file names and commands
-- **Up/Down arrows**: Browse command history
+### Terminal
 - **Ctrl+C**: Stop the current command
 - **Ctrl+D**: Send end-of-file signal
 - **Ctrl+Z**: Pause the current command
+- **Tab**: Auto-complete file names
 
 ### Panels
 - **Cmd+B**: Show/hide file browser
@@ -208,18 +164,6 @@ cat README[Tab]  →  cat README.md
 ```
 
 If there are multiple matches, press **Tab** again to see all options.
-
-## Slash Commands
-
-Slash commands are special shortcuts that start with `/`:
-
-| Command | What It Does |
-|---------|-------------|
-| `/help` | Show available commands |
-| `/favorite` or `/fav` | Add current folder to favorites |
-| `/new` | Create a new session |
-| `/reload` | Rebuild and restart the app (for developers) |
-| `/ask <question>` | Explicitly ask the AI something |
 
 ## Display Modes
 
@@ -292,14 +236,9 @@ You'll see it run commands in the terminal. If it does something unexpected, jus
 
 Yes! If you know commands like `ls`, `git status`, or `npm install`, you can type them directly. The AI automatically detects common commands and runs them.
 
-### "What's the difference between the terminal and the command bar?"
-
-The command bar is smarter — it understands natural language and context. The terminal shows you exactly what's happening behind the scenes.
-
 ## Getting More Help
 
-- Type `/help` to see available commands
-- Ask the AI: "how do I...?"
+- Ask Claude Code: "how do I...?"
 - Check the terminal output to see what commands were run
 - Try things! The AI can help you undo mistakes
 

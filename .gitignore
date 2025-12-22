@@ -104,3 +104,6 @@ site/
 # Git worktrees (used by scripts like reconcile-history.sh)
 scripts/.worktrees/
 .worktrees/
+
+# Shebang projects folder (sibling projects created during development)
+projects/

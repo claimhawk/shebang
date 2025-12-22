@@ -268,7 +268,7 @@ agent/examples/agent-example/
 
 ### For Documentation
 1. Link to this example from `/docs/design/AGENTS.md`
-2. Reference in `/agent/system.md` for workflow templates
+2. Reference in `/.shebang/system.md` for workflow templates
 3. Include in `/CLAUDE.md` as example of agent usage
 
 ### For Users

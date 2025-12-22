@@ -45,49 +45,36 @@ struct MainWindowView: View {
                     )
                 }
 
-                // Center: Terminal + Favorites + Command bar (takes remaining space)
-                VStack(spacing: 0) {
-                    // Terminal area with file preview overlay
-                    ZStack(alignment: .leading) {
-                        TerminalCanvasView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Center: Terminal (takes remaining space)
+                // Claude Code runs directly in dtach - no command bar needed
+                ZStack(alignment: .leading) {
+                    TerminalCanvasView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                        // File preview overlays the terminal (not the whole center column)
-                        if state.ui.filePreviewOpen, let file = state.ui.previewingFile {
-                            FilePreviewView(file: file, onClose: closeFilePreview)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(.ultraThinMaterial)
-                                .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                        }
+                    // File preview overlays the terminal
+                    if state.ui.filePreviewOpen, let file = state.ui.previewingFile {
+                        FilePreviewView(file: file, onClose: closeFilePreview)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(.ultraThinMaterial)
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
                     }
 
-                    // Favorites drawer (above command bar)
+                    // Favorites drawer at bottom
                     if state.ui.favoritesDrawerOpen {
-                        VStack(spacing: 0) {
-                            HorizontalPanelHandle(isOpen: Binding(
-                                get: { state.ui.favoritesDrawerOpen },
-                                set: { state.ui.favoritesDrawerOpen = $0 }
-                            ))
-                            FavoritesDrawerView()
-                                .frame(height: favoritesDrawerHeight)
-                                .background(.ultraThinMaterial)
+                        VStack {
+                            Spacer()
+                            VStack(spacing: 0) {
+                                HorizontalPanelHandle(isOpen: Binding(
+                                    get: { state.ui.favoritesDrawerOpen },
+                                    set: { state.ui.favoritesDrawerOpen = $0 }
+                                ))
+                                FavoritesDrawerView()
+                                    .frame(height: favoritesDrawerHeight)
+                                    .background(.ultraThinMaterial)
+                            }
                         }
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                    } else {
-                        // Just the handle when closed
-                        HorizontalPanelHandle(isOpen: Binding(
-                            get: { state.ui.favoritesDrawerOpen },
-                            set: { state.ui.favoritesDrawerOpen = $0 }
-                        ))
                     }
-
-                    // Command bar at bottom
-                    // Note: Stays visible but disabled during interactive mode
-                    CommandBarView()
-                        .frame(minHeight: commandBarHeight)
-                        .background(Color.Shebang.bgSecondary)
-                        .opacity(state.terminal.isClaudeRunning ? 0.5 : 1.0)
-                        .allowsHitTesting(!state.terminal.isClaudeRunning)
                 }
 
                 // Right sessions panel (resizes terminal when open/closed)

@@ -113,17 +113,6 @@ Uses Claude Code agent to guide interactive installations
 
 ---
 
-## CommandBarView
-
-_Source: `Sources/ShebangApp/Views/CommandBarView.swift`_
-
-### `struct CommandBarView: View`
-
-Command input bar with git-aware prompt
-Shows: directory | git branch | git status indicators
-
----
-
 ## FavoritesDrawerView
 
 _Source: `Sources/ShebangApp/Views/FavoritesDrawerView.swift`_
@@ -210,9 +199,8 @@ Handles PTY connection, output capture, and session CWD
 
 ### `class ReadOnlyTerminalContainer: NSView`
 
-Container that wraps terminal view and blocks keyboard input
-All input must go through the command bar
-Allows: text selection, copy (Cmd+C), scrolling
+Container that wraps terminal view with dtach session persistence
+Allows: text selection, copy (Cmd+C), native scrolling
 
 ---
 
@@ -265,17 +253,15 @@ Shebang uses a React-like state decomposition pattern:
 | Component | Purpose |
 |-----------|---------|
 | `MainWindowView` | Root HSplitView layout |
-| `SidebarView` | File browser with reactive CWD |
+| `SidebarView` | File browser with reactive CWD and file system watching |
 | `TerminalCanvasView` | Terminal display (interactive/block modes) |
 | `SessionPanelView` | Session list and management |
-| `CommandBarView` | Input with command routing |
+| `SwiftTermView` | Terminal with dtach session persistence |
 
-### Command Routing
+### Session Persistence
 
-The `CommandRouter` enum handles input classification:
-
-1. `/commands` → Internal Shebang commands
-2. `$ prefix` → Explicit shell command
-3. Known commands (`ls`, `git`, etc.) → Shell
-4. Natural language → Claude Code AI
+Sessions use dtach for persistence:
+- Socket path: `/tmp/shebang-{session-id}.sock`
+- Sessions survive app restarts
+- Claude Code runs directly in the terminal
 

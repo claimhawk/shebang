@@ -14,6 +14,10 @@
 
 ---
 
+> **ALPHA SOFTWARE** — This project is in heavy, active development. We don't guarantee it to be free of bugs. The developers use Shebang daily to build Shebang itself, so issues get found and fixed quickly. Stable release tags will begin at version 0.1.0.
+
+---
+
 ## Getting Started (Fork-and-Go)
 
 **Fork this repo and you get the entire production-grade development environment:**
@@ -27,7 +31,7 @@ cd Shebang
 pip install pyyaml ruff mypy radon
 
 # 3. Start the development portal (opens in browser automatically)
-python3 web/server.py
+python3 .shebang/web/server.py
 ```
 
 **That's it.** The development portal opens at http://localhost:8080 with:
@@ -117,7 +121,7 @@ But here's the thing: **you don't need to know the incantations to use it.**
 
 Everything flows through the terminal because that's where the work actually happens. Transparency. Reproducibility. Power users can drop to shell. AI agents operate here.
 
-The terminal shows you what's happening. The command bar lets you talk to it in plain English.
+Claude Code runs directly in the terminal. You talk to it in plain English.
 
 You don't need to memorize `grep -rn "pattern" --include="*.js"` to do find-and-replace. You just say "replace old with new in all JavaScript files."
 
@@ -136,7 +140,6 @@ Shebang is built using Shebang. Not as a party trick, but as a forcing function:
 - If the tool can't build itself, it's not good enough
 - Every pain point we hit, we fix immediately
 - The tool improves as we use it
-- `/reload` makes iteration instant
 
 This is the ultimate dogfooding.
 
@@ -157,23 +160,18 @@ This is the ultimate dogfooding.
 
 Shebang is the universal frontend for agentic development.
 
-## Quick Start
+## Quick Start (macOS App)
 
 ```bash
 # Clone it
 git clone https://github.com/MichaelONeal/Shebang.git
 cd Shebang
 
-# Build it (requires Xcode 16+, macOS 15+)
-xcodebuild -scheme Shebang -configuration Release
-
-# Run it
-open build/Release/Shebang.app
+# Build and run it (requires Xcode 16+, macOS 15+)
+./build.sh --run
 ```
 
-Or just download the app and move it to Applications.
-
-That's it. You're in.
+The app opens automatically. That's it. You're in.
 
 ## What You Can Do
 
@@ -203,10 +201,6 @@ Multiple sessions running in parallel. Each with its own:
 
 Create a session for each project or task. Switch between them with one click.
 
-### Use `/reload` During Development
-
-Building Shebang *in* Shebang? Type `/reload` and the app rebuilds itself and restarts. Instant iteration loop.
-
 ### See Everything
 
 Interactive mode: Live terminal, everything as it happens.
@@ -220,11 +214,11 @@ Switch between them with the toolbar.
 - **Terminal-first** — Everything flows through the terminal, but you don't need to know the commands
 - **Reactive** — Follows your current directory, branch, and context
 - **Sessions** — Multiple workspaces, one click to switch
-- **Git integration** — Status in the prompt, natural language for git operations
+- **Git integration** — Natural language for git operations
 - **File browser** — Automatically syncs with your current location
 - **Favorites** — Quick access to folders you visit often
 - **Tab completion** — For file names and common commands
-- **Built with itself** — `/reload` for instant iteration
+- **Built with itself** — Dogfooding as development methodology
 
 ## The Public Domain Commitment
 

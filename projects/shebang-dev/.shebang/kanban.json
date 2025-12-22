@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-12-21T17:54:00.000000",
+  "lastUpdated": "2025-12-21T20:15:00.000000",
   "columns": [
     {
       "id": "backlog",
@@ -78,13 +78,6 @@
           "category": "research",
           "created": "2025-12-21T15:00:00Z",
           "artifact": "/docs/research/PAPERS.md"
-        },
-        {
-          "id": "marketing",
-          "title": "Marketing website",
-          "description": "Sales website to drive GitHub forks. Hero section, problem/solution, proof, features grid, CTA.",
-          "category": "docs",
-          "created": "2025-12-21T16:30:00Z"
         }
       ]
     },
@@ -92,22 +85,40 @@
       "id": "review",
       "name": "REVIEW",
       "color": "purple",
-      "tasks": [
-        {
-          "id": "readme-update",
-          "title": "README fork-and-go update",
-          "description": "Getting Started section with 3 commands. Feature table. Production-ready in 60 seconds.",
-          "category": "docs",
-          "created": "2025-12-21T16:20:00Z",
-          "artifact": "/docs/README.md"
-        }
-      ]
+      "tasks": []
     },
     {
       "id": "done",
       "name": "DONE",
       "color": "success",
       "tasks": [
+        {
+          "id": "marketing",
+          "title": "Marketing website",
+          "description": "Sales website to drive GitHub forks. Hero section, problem/solution, proof, features grid, CTA, roadmap, footer. 1023 lines.",
+          "meta": "web/marketing.html",
+          "category": "docs",
+          "created": "2025-12-21T16:30:00Z",
+          "completed": "2025-12-21T20:20:00Z",
+          "artifact": "/web/marketing.html"
+        },
+        {
+          "id": "session-switching",
+          "title": "Session switching fix",
+          "description": "Fixed terminal session switching using ZStack with isActive parameter. Each session now has its own persistent terminal view.",
+          "meta": "NSView.isHidden",
+          "category": "feature",
+          "completed": "2025-12-21T20:15:00Z"
+        },
+        {
+          "id": "readme-update",
+          "title": "README fork-and-go update",
+          "description": "Getting Started section with 3 commands. Feature table. Production-ready in 60 seconds. Fixed build command to use ./build.sh",
+          "category": "docs",
+          "created": "2025-12-21T16:20:00Z",
+          "completed": "2025-12-21T20:15:00Z",
+          "artifact": "/README.md"
+        },
         {
           "id": "git-reconcile",
           "title": "Git history reconciliation",

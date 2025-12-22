@@ -122,12 +122,9 @@
 | Feature | Status | Commit | Phase | Description |
 |---------|--------|--------|-------|-------------|
 | Three-Panel Layout | ✅ | dbdc0a6 | Foundation | File browser, terminal canvas, session panel |
-| Command Bar | ✅ | dbdc0a6 | Foundation | Natural language input with git-aware prompt |
-| Git-Aware Prompt | ✅ | dbdc0a6 | Foundation | Show status (✓2 ●3 +1) in command prompt |
-| CWD Breadcrumb | ✅ | dbdc0a6 | Foundation | Current working directory navigation |
 | Favorites Drawer | ✅ | dbdc0a6 | Foundation | Quick access to common directories |
-| File Browser (Reactive) | ✅ | dbdc0a6, bddf430 | Foundation | Follows `cd`, derives from `ls` command |
-| Terminal Canvas | ✅ | dbdc0a6 | Foundation | SwiftTerm integration, read-only display |
+| File Browser (Reactive) | ✅ | dbdc0a6, bddf430 | Foundation | Follows `cd`, derives from `ls` command, auto-refreshes on filesystem changes |
+| Terminal Canvas | ✅ | dbdc0a6 | Foundation | SwiftTerm integration with dtach session persistence |
 | Session Panel | ✅ | dbdc0a6 | Foundation | Tab-like workspace switching |
 | Interactive vs Block Mode | ✅ | dbdc0a6 | Foundation | Toggle between live terminal and organized blocks |
 
@@ -142,15 +139,14 @@
 | Feature | Status | Commit | Phase | Description |
 |---------|--------|--------|-------|-------------|
 | Multiple Sessions | ✅ | dbdc0a6 | Foundation | Parallel workspaces with independent state |
-| Session Persistence Framework | ✅ | dbdc0a6 | Foundation | Foundation for save/restore (not fully implemented) |
-| Hot Reload (`/reload`) | ✅ | dbdc0a6 | Foundation | Rebuild and restart app without losing state |
-| Working Directory per Session | 🟡 | - | Alpha | Each session has independent `cwd` |
-| Terminal History per Session | 🟡 | - | Alpha | Session-scoped command history |
+| Session Persistence (dtach) | ✅ | - | Foundation | Sessions persist via dtach sockets, survive app restarts |
+| Working Directory per Session | ✅ | - | Foundation | Each session has independent `cwd` |
+| Terminal History per Session | ✅ | - | Foundation | Session-scoped command history |
 | File Browser State per Session | 🟡 | - | Alpha | Session-scoped navigation state |
 
 **Git History:**
 - dbdc0a6: Session model (70 lines) with persistence framework
-- Partial implementation: full persistence is IN PROGRESS
+- Migrated from tmux to dtach for simpler session persistence
 
 ---
 
@@ -158,16 +154,19 @@
 
 | Feature | Status | Commit | Phase | Description |
 |---------|--------|--------|-------|-------------|
-| SwiftTerm Integration | ✅ | dbdc0a6 | Foundation | VT100 terminal emulation |
-| Read-Only Terminal Display | ✅ | dbdc0a6 | Foundation | Output shown, input via command bar |
+| SwiftTerm Integration | ✅ | dbdc0a6 | Foundation | VT100 terminal emulation with native scrolling |
+| dtach Session Persistence | ✅ | - | Foundation | Sessions survive app restarts via dtach sockets |
 | Terminal as Single Source of Truth | ✅ | bddf430 | Foundation | All UI state derives from terminal commands |
 | `ls` for File Browser | ✅ | bddf430 | Foundation | File browser uses `ls`, not FileManager API |
 | Git Status from `git` | ✅ | bddf430 | Foundation | Use git binary, not libgit2 |
+| File Drag as Path | ✅ | - | Foundation | Dragging files from sidebar inserts path as text |
+| Binary File Path Prefix | ✅ | - | Foundation | Binary files prefixed with "binary:" to prevent auto-attachment |
 | Sandboxed Shell Customization | ⭕ | - | Planned | In-app aliases/functions, never touch dotfiles |
 
 **Git History:**
 - dbdc0a6: SwiftTermView (190 lines), TerminalCanvasView (333 lines)
 - bddf430: Philosophy documented, SidebarView refactored
+- Migrated from tmux to dtach for simpler session persistence
 
 ---
 
@@ -296,7 +295,7 @@
 | Examples → agent/examples/ | ✅ | 884bbb0 | Foundation | Moved to agent directory |
 | .claude/context/ → agent/ | ✅ | 884bbb0 | Foundation | Tool-agnostic location |
 | VOICE.md → agent/VOICE.md | ✅ | 884bbb0 | Foundation | Agent writing guidelines |
-| system.md → agent/system.md | ✅ | 884bbb0 | Foundation | Universal agent protocol |
+| system.md → .shebang/system.md | ✅ | 884bbb0 | Foundation | Universal agent protocol |
 
 **Git History:**
 - 1efcc32: Restructured to Swift Package Manager

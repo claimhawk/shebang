@@ -113,12 +113,12 @@ Shebang! is built using Shebang! Not as a party trick, but as the ultimate dogfo
 > Shebang! leverages cutting-edge AI to deliver transformative developer productivity.
 
 **Good:**
-> The terminal shows you what's happening. The command bar lets you talk to it in plain English.
+> The terminal shows you what's happening. Claude Code talks to you in plain English.
 
 **Bad:**
 > Our integrated natural language processing interface enables seamless human-machine interaction.
 
-See `agent/VOICE.md` for the complete voice guide.
+See `.shebang/VOICE.md` for the complete voice guide.
 
 ---
 

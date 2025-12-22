@@ -18,7 +18,7 @@ Helps users understand and navigate the Shebang development workflow.
 
 ### The Kanban Board
 
-Access at http://localhost:8080 after running `python3 web/server.py`
+Access at http://localhost:8080 after running `python3 .shebang/web/server.py`
 
 **Columns:**
 - **Backlog** - Future work, ideas, planned features
@@ -98,7 +98,7 @@ A new folder is created with everything set up.
 
 ### "How do I see my tasks?"
 ```
-Run: python3 web/server.py
+Run: python3 .shebang/web/server.py
 Open: http://localhost:8080
 ```
 
@@ -142,7 +142,7 @@ User: I'm new, how does this work?
 Agent: Welcome to Shebang! Here's the quick tour:
 
 1. Your project dashboard is at localhost:8080
-   Run: python3 web/server.py
+   Run: python3 .shebang/web/server.py
 
 2. Add tasks to the Backlog column
 

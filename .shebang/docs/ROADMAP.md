@@ -35,7 +35,7 @@ This roadmap organizes Shebang! development into three phases:
 - ✅ **Agent Protocol** (7cafb1d, c7c213e, 884bbb0)
   - `system.md` with startup actions and git workflow
   - `CLAUDE.md` as agent operating manual
-  - `agent/` directory for tool-agnostic knowledge base
+  - `.shebang/` directory for tool-agnostic knowledge base
   - **Dependencies**: None
   - **Enables**: Multi-agent collaboration
 
@@ -87,13 +87,6 @@ This roadmap organizes Shebang! development into three phases:
   - **Dependencies**: None
   - **Enables**: Visual development environment
 
-- ✅ **Command Bar** (dbdc0a6)
-  - Natural language input
-  - Git-aware prompt (✓2 ●3 +1)
-  - CWD breadcrumb navigation
-  - **Dependencies**: Terminal canvas
-  - **Enables**: Agentic interface
-
 - ✅ **File Browser** (dbdc0a6, bddf430)
   - Derives state from `ls` command (not FileManager API)
   - Auto-sync with terminal `cd`
@@ -103,16 +96,16 @@ This roadmap organizes Shebang! development into three phases:
 
 - ✅ **Session Management** (dbdc0a6)
   - Multiple parallel workspaces
-  - Persistence across restarts
-  - Hot reload framework (`/reload` command)
+  - Persistence via dtach sockets
+  - Sessions survive app restarts
   - **Dependencies**: None
   - **Enables**: Multi-project workflows
 
 - ✅ **Terminal Integration** (dbdc0a6)
-  - SwiftTerm for VT100 emulation
-  - Read-only display (input via command bar)
+  - SwiftTerm for VT100 emulation with native scrolling
+  - dtach for session persistence
   - Interactive vs block mode toggle
-  - **Dependencies**: SwiftTerm
+  - **Dependencies**: SwiftTerm, dtach
   - **Enables**: Terminal-first workflow
 
 ### Project Infrastructure
@@ -162,17 +155,9 @@ This roadmap organizes Shebang! development into three phases:
   - **Dependencies**: Terminal as Single Source of Truth
   - **Enables**: True reactive environment
 
-- 🔵 **Command Parser**
-  - Natural language → shell command translation
-  - Intent classification (git, file ops, build, test)
-  - Fallback to direct shell execution
-  - **Dependencies**: Command bar
-  - **Enables**: "Tell it what you want" interface
-
-- 🔵 **Session Persistence**
-  - Save/restore working directory
-  - Terminal history preservation
-  - File browser state
+- 🔵 **File Browser State Persistence**
+  - File browser expanded/collapsed state
+  - Selected file persistence
   - **Dependencies**: Session management
   - **Enables**: Resume workflows across app restarts
 
@@ -282,11 +267,11 @@ This roadmap organizes Shebang! development into three phases:
 
 ### Developer Experience
 
-- ⭕ **Tab Completion**
+- ⭕ **Enhanced Tab Completion**
   - File path completion
   - Command history search
   - Project-specific commands
-  - **Dependencies**: Command bar
+  - **Dependencies**: Terminal integration
   - **Enables**: Efficiency without memorization
 
 - ⭕ **File Preview**
@@ -300,7 +285,7 @@ This roadmap organizes Shebang! development into three phases:
   - Natural language: "replace X with Y in all JS files"
   - Regex support for power users
   - Preview before apply
-  - **Dependencies**: Command parser
+  - **Dependencies**: Claude Code integration
   - **Enables**: Bulk operations without fear
 
 ---
@@ -327,7 +312,7 @@ This roadmap organizes Shebang! development into three phases:
   - Natural language: "deploy to staging"
   - Environment-aware configuration
   - Rollback on failure
-  - **Dependencies**: Command parser
+  - **Dependencies**: Claude Code integration
   - **Enables**: DevOps without YAML
 
 ### Team Collaboration
@@ -394,16 +379,11 @@ This roadmap organizes Shebang! development into three phases:
 │                  ALPHA REFINEMENT (IN PROGRESS)            │
 ├────────────────────────────────────────┼──────────────────┤
 │                                        │                   │
-│                                        ▼                   │
-│                               ┌─────────────────┐          │
-│                               │  Command Parser │          │
-│                               └────────┬────────┘          │
-│                                        │                   │
 │           ┌────────────────────────────┼───────┐          │
 │           │                            │        │          │
 │           ▼                            ▼        ▼          │
 │  ┌─────────────────┐          ┌─────────────────┐          │
-│  │  State Sync     │          │  Session        │          │
+│  │  State Sync     │          │  File Browser   │          │
 │  │  (git, cwd)     │          │  Persistence    │          │
 │  └─────────────────┘          └─────────────────┘          │
 └────────────────────────────────────────┼──────────────────┘

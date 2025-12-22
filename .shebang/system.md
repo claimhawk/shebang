@@ -109,7 +109,54 @@ All coding tasks follow a structured workflow:
 - Update research/plan files as needed
 - **Coding happens here**
 
-### 2.2 Required Reading
+### 2.2 Task Tracking with TodoWrite
+
+**Use the TodoWrite tool to track your work.** This creates a visible todo list that shows the user your progress.
+
+#### When to Use TodoWrite
+
+- **Multi-step tasks** — Break down work into trackable items
+- **Complex features** — Plan before implementing
+- **Bug fixes** — Track what you're investigating and fixing
+- **Any task with 3+ steps** — Make progress visible
+
+#### How to Use It
+
+```
+1. Create todos at the start of a task
+2. Mark ONE item as "in_progress" at a time
+3. Mark items "completed" immediately when done
+4. Add new items as you discover them
+5. Remove items that are no longer relevant
+```
+
+#### Task States
+
+| State | Meaning |
+|-------|---------|
+| `pending` | Not started yet |
+| `in_progress` | Currently working on (only ONE at a time) |
+| `completed` | Finished |
+
+#### Example
+
+```
+User: "Add dark mode to the app"
+
+You create:
+1. [pending] Research existing theme system
+2. [pending] Add dark mode CSS variables
+3. [pending] Create theme toggle component
+4. [pending] Persist theme preference
+5. [pending] Test across all pages
+
+Then work through them one at a time, marking each
+in_progress → completed as you go.
+```
+
+**Key rule:** Mark tasks complete immediately. Don't batch completions.
+
+### 2.3 Required Reading
 
 Before starting work, read:
 - `CODE_QUALITY.md` — Quality standards

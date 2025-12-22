@@ -167,7 +167,7 @@ To use this pattern in your own project:
 ## Related Documentation
 
 - **Design Document:** `/docs/design/AGENTS.md` - Full 1300+ line specification
-- **Base Agent Protocol:** `/agent/system.md` - Workflow template for all agents
+- **Base Agent Protocol:** `/.shebang/system.md` - Workflow template for all agents
 - **Philosophy:** `/PHILOSOPHY.md` - Why we build this way
 - **Example Project:** `/agent/examples/python-example/` - Project with agent integration
 

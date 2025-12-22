@@ -25,7 +25,10 @@ let package = Package(
                 .product(name: "Files", package: "ProjectNavigator"),
                 .product(name: "ProjectNavigator", package: "ProjectNavigator")
             ],
-            path: "Sources/ShebangApp"
+            path: "Sources/ShebangApp",
+            resources: [
+                .copy("Resources/shebang.zip")
+            ]
         ),
         .testTarget(
             name: "ShebangAppTests",
