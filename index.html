@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shebang! - 60 years of programming knowledge, available to everyone. An automated development environment that makes complexity collapse.">
+    <meta property="og:title" content="Shebang! - The Complexity Barrier Has Collapsed">
+    <meta property="og:description" content="1 hour with Shebang! = 1 day for a 2020 experienced, senior developer. 60 years of programming knowledge, available in 3 commands.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://raw.githubusercontent.com/MichaelONeal/Shebang/main/Assets/AppIcon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Shebang! - The Complexity Barrier Has Collapsed">
+    <meta name="twitter:description" content="1 hour with Shebang! = 1 day for a 2020 experienced, senior developer.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/MichaelONeal/Shebang/main/Assets/AppIcon.png">
+    <title>Shebang! - The Complexity Barrier Has Collapsed</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d2d;
+            --bg-elevated: #3c3c3c;
+            --text-primary: #cccccc;
+            --text-secondary: #9d9d9d;
+            --text-muted: #6e6e6e;
+            --accent-primary: #9d7cd8;
+            --accent-light: #bb9af7;
+            --accent-dark: #7c5cbf;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --info: #60a5fa;
+            --terminal-green: #4ade80;
+            --terminal-yellow: #fbbf24;
+            --terminal-blue: #60a5fa;
+            --terminal-purple: #c084fc;
+            --glow: 0 0 20px rgba(167, 139, 250, 0.3);
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header Navigation */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--bg-elevated);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent-light);
+        }
+
+        .header nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .header nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .header nav a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 24px 80px;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .tagline {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-weight: 400;
+        }
+
+        .hero .productivity {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--terminal-green);
+            margin-bottom: 48px;
+            text-shadow: var(--glow);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-light);
+            box-shadow: var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--bg-elevated);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+            background: rgba(157, 124, 216, 0.1);
+        }
+
+        /* Stats Bar */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent-light);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Section Container */
+        .section {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .section-header p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Problem Section */
+        .problem {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--bg-elevated);
+            border-bottom: 1px solid var(--bg-elevated);
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .problem-card {
+            padding: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .problem-card h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: var(--error);
+        }
+
+        .problem-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .problem-card li {
+            padding: 8px 0;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .problem-card li::before {
+            content: "×";
+            position: absolute;
+            left: 0;
+            color: var(--error);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* Solution Section */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .solution-card {
+            padding: 32px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .solution-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .solution-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .solution-card h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--accent-light);
+        }
+
+        .solution-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .solution-card ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 16px;
+        }
+
+        .solution-card li {
+            padding: 6px 0;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 20px;
+            font-size: 14px;
+        }
+
+        .solution-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Proof Section */
+        .proof {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-top: 1px solid var(--bg-elevated);
+            border-bottom: 1px solid var(--bg-elevated);
+        }
+
+        .metrics-banner {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 64px;
+            text-align: center;
+        }
+
+        .metric {
+            padding: 24px;
+            background: var(--bg-primary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .metric-number {
+            font-size: 56px;
+            font-weight: 800;
+            color: var(--terminal-green);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .metric-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .proof-quote {
+            text-align: center;
+            font-size: 28px;
+            font-style: italic;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 48px auto;
+            padding: 32px;
+            border-left: 4px solid var(--accent-primary);
+            background: var(--bg-primary);
+        }
+
+        /* Features Grid */
+        .features-table {
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .features-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .features-table th {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-light);
+            border-bottom: 1px solid var(--bg-elevated);
+        }
+
+        .features-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--bg-elevated);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .features-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .features-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .feature-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Philosophy Section */
+        .philosophy {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--bg-elevated);
+            border-bottom: 1px solid var(--bg-elevated);
+        }
+
+        .principles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .principle {
+            padding: 24px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .principle h4 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--accent-light);
+        }
+
+        .principle p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--bg-elevated);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 32px 0;
+            font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-block .command {
+            color: var(--terminal-green);
+        }
+
+        .code-block .comment {
+            color: var(--text-muted);
+        }
+
+        /* Roadmap */
+        .roadmap-phases {
+            display: grid;
+            gap: 16px;
+        }
+
+        .phase {
+            padding: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-elevated);
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .phase-number {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent-primary);
+            opacity: 0.3;
+        }
+
+        .phase.current .phase-number {
+            opacity: 1;
+            color: var(--terminal-green);
+        }
+
+        .phase-content h4 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .phase-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .phase.current {
+            border-color: var(--success);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        /* Final CTA */
+        .final-cta {
+            text-align: center;
+            padding: 120px 24px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .final-cta h2 {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .final-cta .steps {
+            max-width: 600px;
+            margin: 48px auto;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--bg-elevated);
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+            justify-content: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-light);
+        }
+
+        .footer-license {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 24px;
+        }
+
+        .footer-tagline {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 40px;
+            }
+
+            .hero .tagline {
+                font-size: 18px;
+            }
+
+            .hero .productivity {
+                font-size: 24px;
+            }
+
+            .section-header h2 {
+                font-size: 32px;
+            }
+
+            .header nav {
+                display: none;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .final-cta h2 {
+                font-size: 36px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="#" class="logo">Shebang<span>!</span></a>
+        <nav>
+            <a href="#problem">Problem</a>
+            <a href="#solution">Solution</a>
+            <a href="#proof">Proof</a>
+            <a href="#features">Features</a>
+            <a href="#philosophy">Philosophy</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>The Complexity Barrier<br>Has Collapsed</h1>
+        <p class="tagline">60 years of programming knowledge, available to everyone.</p>
+        <p class="productivity">1 hour with Shebang! = 1 day for a 2020 senior developer</p>
+        <div class="cta-buttons">
+            <a href="https://github.com/MichaelONeal/Shebang" class="btn btn-primary" target="_blank">Fork on GitHub</a>
+            <a href="https://github.com/MichaelONeal/Shebang/blob/main/README.md" class="btn btn-secondary" target="_blank">Read the Docs</a>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="stats">
+        <div class="stat">
+            <span class="stat-value">19x</span>
+            <span class="stat-label">Productivity Speedup</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">145</span>
+            <span class="stat-label">Features Built</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">13.6K</span>
+            <span class="stat-label">Lines of Code</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">3 days</span>
+            <span class="stat-label">Development Time</span>
+        </div>
+    </div>
+
+    <!-- Problem Section -->
+    <section id="problem" class="section problem">
+        <div class="section-header">
+            <h2>The Programming Knowledge Barrier</h2>
+            <p>Six decades of hard-won expertise creates barriers at every level</p>
+        </div>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <h3>For Experienced Developers</h3>
+                <ul>
+                    <li>Years spent learning arcane commands</li>
+                    <li>Memorizing flags used once a month</li>
+                    <li>Context-switching between 12 tools</li>
+                    <li>Half the day fighting the environment</li>
+                    <li>Constant Stack Overflow diving</li>
+                </ul>
+            </div>
+            <div class="problem-card">
+                <h3>For New Developers</h3>
+                <ul>
+                    <li>"Learn git, then shell, then build systems..."</li>
+                    <li>Barrier to entry keeps getting higher</li>
+                    <li>Months of training before contributing</li>
+                    <li>Imposter syndrome from missing "magic"</li>
+                    <li>Tribal knowledge gatekeeping</li>
+                </ul>
+            </div>
+            <div class="problem-card">
+                <h3>For Everyone</h3>
+                <ul>
+                    <li>AI assistants make mistakes without guardrails</li>
+                    <li>Code quality requires expensive senior review</li>
+                    <li>Onboarding takes weeks or months</li>
+                    <li>Knowledge lives in heads, not infrastructure</li>
+                    <li>Productivity bottlenecked by expertise</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="solution" class="section">
+        <div class="section-header">
+            <h2>Knowledge Becomes Infrastructure</h2>
+            <p>60 years of programming wisdom distilled into guardrails, automation, and intelligent agents</p>
+        </div>
+        <div class="solution-grid">
+            <div class="solution-card">
+                <span class="solution-icon">🛡️</span>
+                <h3>Guardrails</h3>
+                <p>Hard-won wisdom encoded in milliseconds</p>
+                <ul>
+                    <li>Secrets never leak to git</li>
+                    <li>Dangerous commands blocked before execution</li>
+                    <li>Anti-patterns caught before code review</li>
+                    <li>Code quality automatic, not optional</li>
+                </ul>
+            </div>
+            <div class="solution-card">
+                <span class="solution-icon">⚡</span>
+                <h3>Terminal as Truth</h3>
+                <p>Everything flows through one source</p>
+                <ul>
+                    <li>No abstraction layers hiding reality</li>
+                    <li>Every action visible and reproducible</li>
+                    <li>AI operates in same environment as you</li>
+                    <li>Git history IS project management</li>
+                </ul>
+            </div>
+            <div class="solution-card">
+                <span class="solution-icon">🧠</span>
+                <h3>Knowledge Infrastructure</h3>
+                <p>Not prerequisites, but built-in behavior</p>
+                <ul>
+                    <li>Don't memorize shell incantations</li>
+                    <li>Don't look up git flags</li>
+                    <li>Don't configure build systems</li>
+                    <li>Just describe what you want</li>
+                </ul>
+            </div>
+            <div class="solution-card">
+                <span class="solution-icon">🚀</span>
+                <h3>Fork-and-Go</h3>
+                <p>Production environment in 3 commands</p>
+                <ul>
+                    <li>Clone, install, run</li>
+                    <li>Dev portal opens automatically</li>
+                    <li>All tooling works out of the box</li>
+                    <li>No "Step 47: Configure webpack..."</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Proof Section -->
+    <section id="proof" class="section proof">
+        <div class="section-header">
+            <h2>The Evidence</h2>
+            <p>This repository itself is the proof - built with Shebang! from the first commit</p>
+        </div>
+        <div class="metrics-banner">
+            <div class="metric">
+                <span class="metric-number">185</span>
+                <span class="metric-desc">Lines/Hour</span>
+            </div>
+            <div class="metric">
+                <span class="metric-number">5.0</span>
+                <span class="metric-desc">Commits/Day</span>
+            </div>
+            <div class="metric">
+                <span class="metric-number">12x</span>
+                <span class="metric-desc">Setup Speedup</span>
+            </div>
+            <div class="metric">
+                <span class="metric-number">27x</span>
+                <span class="metric-desc">Integration Speed</span>
+            </div>
+            <div class="metric">
+                <span class="metric-number">48x</span>
+                <span class="metric-desc">Documentation Speed</span>
+            </div>
+        </div>
+
+        <div class="proof-quote">
+            "Every commit logged with timestamps. Productivity metrics extracted from git history. Real development time vs industry estimates. The agent didn't just help — it fundamentally changed the velocity."
+        </div>
+
+        <div class="code-block">
+<span class="comment"># What makes the difference?</span>
+
+<span class="command">2020 Human Developer:</span>
+  Stack Overflow diving
+  Documentation hunting
+  Trial-and-error cycles
+  Sequential task execution
+  Manual refactoring
+  Hope for best practices
+
+<span class="command">With Shebang!:</span>
+  Agent knows the APIs
+  Patterns internalized
+  Correct on first attempt
+  Parallel agent work
+  "Change X everywhere"
+  Hooks enforce standards
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="section-header">
+            <h2>What You Get Immediately</h2>
+            <p>Fork the repo and get the entire production-grade development environment</p>
+        </div>
+        <div class="features-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="feature-name">Guardrails</td>
+                        <td>PreToolUse/PostToolUse hooks that enforce code quality, block secrets, validate commands</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Hookify Rules</td>
+                        <td>Content-based blocking for anti-patterns, silent exceptions, junk drawer directories</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Agent Protocol</td>
+                        <td>system.md and CLAUDE.md templates for configuring Claude Code</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Dev Portal</td>
+                        <td>localhost:8080 dashboard with kanban, git history, docs, metrics</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Code Quality</td>
+                        <td>Python (ruff, mypy, radon) and TypeScript (ESLint, Prettier) enforcement</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Testing Docs</td>
+                        <td>3000+ lines of testing best practices, anti-patterns, language guides</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">macOS App</td>
+                        <td>Native Swift/SwiftUI development environment (optional, requires Xcode 16+)</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">Multi-Project</td>
+                        <td>Manage multiple codebases from one install with /new command</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code-block" style="margin-top: 48px;">
+<span class="comment"># Getting Started (3 commands)</span>
+
+<span class="command">git clone</span> https://github.com/YOUR_USERNAME/Shebang.git
+<span class="command">cd</span> Shebang && <span class="command">pip install</span> pyyaml ruff mypy radon
+<span class="command">python3</span> web/server.py
+
+<span class="comment"># Dev portal opens at http://localhost:8080</span>
+<span class="comment"># That's it. You're in.</span>
+        </div>
+    </section>
+
+    <!-- Philosophy Section -->
+    <section id="philosophy" class="section philosophy">
+        <div class="section-header">
+            <h2>The Philosophy</h2>
+            <p>Emacs + Unix + Git + Screen/Tmux, filtered through 60 years of knowledge</p>
+        </div>
+        <div class="principles-grid">
+            <div class="principle">
+                <h4>The Interface Gets Out of Your Way</h4>
+                <p>Natural language is the interface. No memorizing commands. No looking up flags. Just say what you want.</p>
+            </div>
+            <div class="principle">
+                <h4>Terminal as Single Source of Truth</h4>
+                <p>Not the file system API. Not a database. The terminal. What you see in the UI is exactly what you'd see if you typed the command.</p>
+            </div>
+            <div class="principle">
+                <h4>Sandboxed Shell Customization</h4>
+                <p>Never touches your system settings. Agents create aliases and functions that only exist inside Shebang!</p>
+            </div>
+            <div class="principle">
+                <h4>Reactive, Not Project-Rooted</h4>
+                <p>cd somewhere? File browser updates. Switch branches? Context shifts. The environment follows you.</p>
+            </div>
+            <div class="principle">
+                <h4>Knowledge Becomes Infrastructure</h4>
+                <p>Type safety is automatic. Tests are suggested. Security is enforced. Performance is default. The AI has read the books.</p>
+            </div>
+            <div class="principle">
+                <h4>Agentic by Design</h4>
+                <p>Not an IDE with AI bolted on. Built from the ground up for AI agents to operate alongside humans.</p>
+            </div>
+            <div class="principle">
+                <h4>Claude Code as First-Class Citizen</h4>
+                <p>Integrated at the deepest level. Commands route to Claude Code. The terminal IS the native environment.</p>
+            </div>
+            <div class="principle">
+                <h4>Built With Itself</h4>
+                <p>Shebang! is built using Shebang! If the tool can't build itself, it's not good enough. Ultimate dogfooding.</p>
+            </div>
+        </div>
+
+        <div class="proof-quote" style="margin-top: 48px;">
+            "The interface gets out of your way. The work remains."
+        </div>
+    </section>
+
+    <!-- Roadmap Section -->
+    <section class="section">
+        <div class="section-header">
+            <h2>The Roadmap</h2>
+            <p>We're at Phase 2. Join us on the journey to 100x developer productivity.</p>
+        </div>
+        <div class="roadmap-phases">
+            <div class="phase">
+                <div class="phase-number">1</div>
+                <div class="phase-content">
+                    <h4>Foundation - COMPLETE</h4>
+                    <p>macOS app, terminal integration, guardrails, web portal, documentation</p>
+                </div>
+            </div>
+            <div class="phase current">
+                <div class="phase-number">2</div>
+                <div class="phase-content">
+                    <h4>Agent Workflows - IN PROGRESS</h4>
+                    <p>Folder-based contexts, natural language git, velocity tracking, marketing website</p>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-number">3</div>
+                <div class="phase-content">
+                    <h4>Intelligence Layer</h4>
+                    <p>Pluggable AI backends (Gemini, Copilot, Q), visual git, sandboxed aliases</p>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-number">4</div>
+                <div class="phase-content">
+                    <h4>Cross-Platform</h4>
+                    <p>Linux (GTK/Qt), Windows (WinUI), PowerShell support, WSL2 integration</p>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-number">5</div>
+                <div class="phase-content">
+                    <h4>Ecosystem</h4>
+                    <p>Marketplace, community templates, plugin system, team features</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <h2>Fork. Clone. Build.</h2>
+        <div class="steps code-block">
+<span class="command">git clone</span> https://github.com/YOUR_USERNAME/Shebang.git
+<span class="command">cd</span> Shebang
+<span class="command">python3</span> web/server.py
+
+<span class="comment"># You're now running a production-grade</span>
+<span class="comment"># development environment.</span>
+<span class="comment"># In 3 commands.</span>
+        </div>
+        <div class="cta-buttons">
+            <a href="https://github.com/MichaelONeal/Shebang/fork" class="btn btn-primary" target="_blank">Fork on GitHub</a>
+            <a href="https://github.com/MichaelONeal/Shebang" class="btn btn-secondary" target="_blank">View Source</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://github.com/MichaelONeal/Shebang" target="_blank">GitHub</a>
+                <a href="https://github.com/MichaelONeal/Shebang/blob/main/PHILOSOPHY.md" target="_blank">Philosophy</a>
+                <a href="https://github.com/MichaelONeal/Shebang/blob/main/README.md" target="_blank">Documentation</a>
+                <a href="https://github.com/MichaelONeal/Shebang/blob/main/docs/ROADMAP.md" target="_blank">Roadmap</a>
+            </div>
+            <div class="footer-license">
+                <strong>PUBLIC DOMAIN</strong> — The Unlicense<br>
+                Use it. Modify it. Sell it. No strings. No corporate BS. No gatekeeping.
+            </div>
+            <p class="footer-tagline">
+                Built by practitioners, for practitioners. From first principles, in the environment itself.
+            </p>
+            <p style="margin-top: 24px; color: var(--text-muted); font-size: 12px;">
+                Created by Michael O'Neal — 30 years software architect, now working in machine learning.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
