@@ -182,6 +182,14 @@ This roadmap organizes Shebang! development into three phases:
 
 ### Claude Code as First-Class Citizen
 
+- ⭕ **MCP Server Integration** (like `--chrome` for browsers)
+  - Background MCP server for Claude Code to control Shebang
+  - Tools: `send_command`, `read_terminal`, `get_session`, `navigate_to`
+  - UI state control: panels, previews, display mode
+  - Enable with `claude --mcp shebang://localhost:PORT`
+  - **Dependencies**: None (standalone TCP server)
+  - **Enables**: Claude Code as the "driver" of Shebang IDE
+
 - ⭕ **Direct Claude Code Execution**
   - Route natural language commands to `claude` CLI
   - Session-aware context management

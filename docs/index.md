@@ -228,9 +228,15 @@ This is free and unencumbered software released into the public domain. See LICE
 
 ## Links
 
+### Documentation
 - **User Guide**: [USER_GUIDE.md](USER_GUIDE.md)
 - **Philosophy**: [PHILOSOPHY.md](PHILOSOPHY.md)
 - **Voice Guide**: [VOICE.md](VOICE.md)
+
+### Research
+- **The Complexity Collapse**: [research/COMPLEXITY_COLLAPSE.md](research/COMPLEXITY_COLLAPSE.md) - How AI commoditizes specialized expertise (19x productivity multiplier demonstrated)
+- **Executive Summary**: [research/EXECUTIVE_SUMMARY.md](research/EXECUTIVE_SUMMARY.md) - One-page overview of the whitepaper
+- **Research Papers**: [research/PAPERS.md](research/PAPERS.md) - Current and future research topics
 
 ---
 

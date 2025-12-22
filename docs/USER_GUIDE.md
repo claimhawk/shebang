@@ -12,12 +12,21 @@ The name comes from `#!` (called "shebang" in Unix) — the symbol that tells co
 
 ### Installation
 
-1. Download the Shebang app
-2. Move it to your Applications folder
-3. Launch Shebang
-4. The app will open with a terminal and a command bar at the bottom
+```bash
+# Clone the repository
+git clone https://github.com/MichaelONeal/Shebang.git
+cd Shebang
 
-That's it! You're ready to go.
+# Build it (requires Xcode 16+, macOS 15+)
+./build.sh
+
+# Run it
+open Shebang.app
+```
+
+Or build manually with `xcodebuild -scheme Shebang -configuration Release`.
+
+The app opens with a terminal and a command bar at the bottom. That's it! You're ready to go.
 
 ### First Look
 

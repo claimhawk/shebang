@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-12-21T16:57:51.360706",
+  "lastUpdated": "2025-12-21T17:54:00.000000",
   "columns": [
     {
       "id": "backlog",
@@ -85,13 +85,6 @@
           "description": "Sales website to drive GitHub forks. Hero section, problem/solution, proof, features grid, CTA.",
           "category": "docs",
           "created": "2025-12-21T16:30:00Z"
-        },
-        {
-          "id": "screenshots",
-          "title": "Screenshot automation",
-          "description": "Browser automation to capture all portal pages for marketing materials.",
-          "category": "docs",
-          "created": "2025-12-21T16:35:00Z"
         }
       ]
     },
@@ -217,6 +210,16 @@
           "category": "core",
           "completed": "2025-12-21T17:25:00Z",
           "artifact": "/theme.yaml"
+        },
+        {
+          "id": "screenshots",
+          "title": "Screenshot automation",
+          "description": "Browser automation to capture all portal pages for marketing materials.",
+          "meta": "6 screenshots",
+          "category": "docs",
+          "created": "2025-12-21T16:35:00Z",
+          "completed": "2025-12-21T17:54:00Z",
+          "artifact": "/docs/marketing/screenshots/"
         }
       ]
     }
