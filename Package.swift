@@ -26,6 +26,11 @@ let package = Package(
                 .product(name: "ProjectNavigator", package: "ProjectNavigator")
             ],
             path: "Sources/ShebangApp"
+        ),
+        .testTarget(
+            name: "ShebangAppTests",
+            dependencies: ["ShebangApp"],
+            path: "Tests/ShebangAppTests"
         )
     ]
 )
