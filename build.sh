@@ -34,6 +34,15 @@ BUILD_VERSION="$patch"
 
 echo "🔨 Building $APP_NAME..."
 
+# Preprocess icon (add macOS bezel) if needed
+ICON_SOURCE="$SCRIPT_DIR/Assets/AppIcon.png"
+ICON_PROCESSED="$SCRIPT_DIR/Assets/AppIcon_processed.png"
+if [[ -f "$ICON_SOURCE" ]] && command -v python3 &> /dev/null; then
+    echo "🎨 Preprocessing app icon..."
+    python3 "$SCRIPT_DIR/scripts/preprocess-icon.py" "$ICON_SOURCE" -o "$ICON_PROCESSED" --padding 0.10 2>/dev/null && \
+        ICON_SOURCE="$ICON_PROCESSED"
+fi
+
 # Build in release mode
 swift build --configuration release
 
@@ -47,27 +56,31 @@ mkdir -p "$APP_NAME.app/Contents/Resources"
 # Copy binary
 cp ".build/release/$APP_NAME" "$APP_NAME.app/Contents/MacOS/"
 
-# Create icon if source PNG exists
-ICON_SOURCE="$SCRIPT_DIR/Assets/AppIcon.png"
+# Create icon if source PNG exists (use processed version if available)
+if [[ -f "$ICON_PROCESSED" ]]; then
+    ICON_FOR_ICNS="$ICON_PROCESSED"
+else
+    ICON_FOR_ICNS="$SCRIPT_DIR/Assets/AppIcon.png"
+fi
 ICON_DEST="$APP_NAME.app/Contents/Resources/AppIcon.icns"
 
-if [[ -f "$ICON_SOURCE" ]]; then
-    echo "🎨 Creating app icon..."
+if [[ -f "$ICON_FOR_ICNS" ]]; then
+    echo "🎨 Creating app icon from ${ICON_FOR_ICNS}..."
     # Create iconset directory
     ICONSET="$SCRIPT_DIR/AppIcon.iconset"
     mkdir -p "$ICONSET"
 
     # Generate all required sizes
-    sips -z 16 16     "$ICON_SOURCE" --out "$ICONSET/icon_16x16.png" 2>/dev/null
-    sips -z 32 32     "$ICON_SOURCE" --out "$ICONSET/icon_16x16@2x.png" 2>/dev/null
-    sips -z 32 32     "$ICON_SOURCE" --out "$ICONSET/icon_32x32.png" 2>/dev/null
-    sips -z 64 64     "$ICON_SOURCE" --out "$ICONSET/icon_32x32@2x.png" 2>/dev/null
-    sips -z 128 128   "$ICON_SOURCE" --out "$ICONSET/icon_128x128.png" 2>/dev/null
-    sips -z 256 256   "$ICON_SOURCE" --out "$ICONSET/icon_128x128@2x.png" 2>/dev/null
-    sips -z 256 256   "$ICON_SOURCE" --out "$ICONSET/icon_256x256.png" 2>/dev/null
-    sips -z 512 512   "$ICON_SOURCE" --out "$ICONSET/icon_256x256@2x.png" 2>/dev/null
-    sips -z 512 512   "$ICON_SOURCE" --out "$ICONSET/icon_512x512.png" 2>/dev/null
-    sips -z 1024 1024 "$ICON_SOURCE" --out "$ICONSET/icon_512x512@2x.png" 2>/dev/null
+    sips -z 16 16     "$ICON_FOR_ICNS" --out "$ICONSET/icon_16x16.png" 2>/dev/null
+    sips -z 32 32     "$ICON_FOR_ICNS" --out "$ICONSET/icon_16x16@2x.png" 2>/dev/null
+    sips -z 32 32     "$ICON_FOR_ICNS" --out "$ICONSET/icon_32x32.png" 2>/dev/null
+    sips -z 64 64     "$ICON_FOR_ICNS" --out "$ICONSET/icon_32x32@2x.png" 2>/dev/null
+    sips -z 128 128   "$ICON_FOR_ICNS" --out "$ICONSET/icon_128x128.png" 2>/dev/null
+    sips -z 256 256   "$ICON_FOR_ICNS" --out "$ICONSET/icon_128x128@2x.png" 2>/dev/null
+    sips -z 256 256   "$ICON_FOR_ICNS" --out "$ICONSET/icon_256x256.png" 2>/dev/null
+    sips -z 512 512   "$ICON_FOR_ICNS" --out "$ICONSET/icon_256x256@2x.png" 2>/dev/null
+    sips -z 512 512   "$ICON_FOR_ICNS" --out "$ICONSET/icon_512x512.png" 2>/dev/null
+    sips -z 1024 1024 "$ICON_FOR_ICNS" --out "$ICONSET/icon_512x512@2x.png" 2>/dev/null
 
     # Convert to icns
     iconutil -c icns "$ICONSET" -o "$ICON_DEST"
@@ -76,7 +89,7 @@ if [[ -f "$ICON_SOURCE" ]]; then
     ICON_KEY="<key>CFBundleIconFile</key>
     <string>AppIcon</string>"
 else
-    echo "⚠️  No icon found at $ICON_SOURCE - using default"
+    echo "⚠️  No icon found at $ICON_FOR_ICNS - using default"
     ICON_KEY=""
 fi
 

@@ -1,10 +1,13 @@
 #!/bin/bash
-# dev-build.sh - Build and hot-reload Shebang app
+# build-dev.sh - Build and hot-reload Shebang app
 #
-# Usage: ./dev-build.sh [--watch]
+# Usage: ./build-dev.sh [--watch]
 #   --watch: Continuously watch for changes and rebuild
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 APP_NAME="ShebangApp"
 BUILD_DIR=".build/debug"
@@ -27,7 +30,21 @@ kill_app() {
     fi
 }
 
+preprocess_icon() {
+    local ICON_SRC="Assets/AppIcon.png"
+    local ICON_DEST="Sources/ShebangApp/Resources/AppIcon.png"
+
+    # Only preprocess if source is newer than destination or destination doesn't exist
+    if [[ ! -f "$ICON_DEST" ]] || [[ "$ICON_SRC" -nt "$ICON_DEST" ]]; then
+        if [[ -f "$ICON_SRC" ]] && command -v python3 &> /dev/null; then
+            log "Preprocessing app icon (adding macOS bezel)..."
+            python3 scripts/preprocess-icon.py "$ICON_SRC" -o "$ICON_DEST" --padding 0.10 2>/dev/null || warn "Icon preprocessing failed, using original"
+        fi
+    fi
+}
+
 build_and_run() {
+    preprocess_icon
     log "Building $APP_NAME..."
 
     if swift build 2>&1; then

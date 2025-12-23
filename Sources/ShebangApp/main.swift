@@ -1,6 +1,81 @@
 import AppKit
 import SwiftTerm
 
+// MARK: - App Icon & Splash Screen
+
+/// Load app icon from bundled resources (256px for dock/switcher)
+func loadAppIcon() -> NSImage? {
+    if let resourceURL = Bundle.module.url(forResource: "AppIcon", withExtension: "png", subdirectory: "Resources"),
+       let image = NSImage(contentsOf: resourceURL) {
+        return image
+    }
+    return nil
+}
+
+/// Load splash icon from bundled resources (512px for splash screen)
+func loadSplashIcon() -> NSImage? {
+    if let resourceURL = Bundle.module.url(forResource: "SplashIcon", withExtension: "png", subdirectory: "Resources"),
+       let image = NSImage(contentsOf: resourceURL) {
+        return image
+    }
+    // Fallback to app icon
+    return loadAppIcon()
+}
+
+/// Splash screen window shown during app startup
+class SplashWindow: NSWindow {
+    private var logoImageView: NSImageView!
+
+    init() {
+        let splashSize = NSSize(width: 400, height: 400)
+        super.init(
+            contentRect: NSRect(origin: .zero, size: splashSize),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+
+        // Window setup
+        self.isOpaque = false
+        self.backgroundColor = .clear
+        self.level = .floating
+        self.center()
+
+        // Content view with dark background
+        let contentView = NSView(frame: NSRect(origin: .zero, size: splashSize))
+        contentView.wantsLayer = true
+        contentView.layer?.backgroundColor = NSColor(red: 0.078, green: 0.086, blue: 0.098, alpha: 1.0).cgColor
+        contentView.layer?.cornerRadius = 20
+        self.contentView = contentView
+
+        // Logo image
+        logoImageView = NSImageView(frame: NSRect(x: 50, y: 80, width: 300, height: 300))
+        logoImageView.imageScaling = .scaleProportionallyUpOrDown
+        if let icon = loadSplashIcon() {
+            logoImageView.image = icon
+        }
+        contentView.addSubview(logoImageView)
+
+        // App name label
+        let nameLabel = NSTextField(labelWithString: "Shebang!")
+        nameLabel.frame = NSRect(x: 0, y: 30, width: 400, height: 40)
+        nameLabel.alignment = .center
+        nameLabel.font = NSFont.systemFont(ofSize: 28, weight: .bold)
+        nameLabel.textColor = NSColor(white: 0.9, alpha: 1.0)
+        contentView.addSubview(nameLabel)
+    }
+
+    func fadeOut(completion: @escaping () -> Void) {
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.5
+            self.animator().alphaValue = 0
+        }, completionHandler: {
+            self.orderOut(nil)
+            completion()
+        })
+    }
+}
+
 // MARK: - FileItem Model
 
 class FileItem: NSObject {
@@ -144,6 +219,10 @@ class Session: NSObject {
         didSet { saveMetadata() }
     }
     let socketPath: String?
+    private var processStarted = false
+    private let shell: String
+    private let environment: [String]
+    private let isReattach: Bool
 
     func saveMetadata() {
         SessionManager.shared.saveMetadata(for: id, name: name, currentDirectory: currentDirectory)
@@ -157,7 +236,10 @@ class Session: NSObject {
         self.id = UUID()
         self.name = name
         self.currentDirectory = startDirectory
-        self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        self.shell = shell
+        self.environment = environment
+        self.isReattach = false
+        self.terminalView = LocalProcessTerminalView(frame: .zero)  // Size will be set by constraints
         self.terminalView.autoresizingMask = [.width, .height]
         self.terminalView.nativeBackgroundColor = Session.terminalBackground
 
@@ -165,22 +247,7 @@ class Session: NSObject {
         self.socketPath = manager.dtachPath != nil ? manager.socketPath(for: id) : nil
 
         super.init()
-
-        // Save initial metadata
         saveMetadata()
-
-        if let dtach = manager.dtachPath, let sock = socketPath {
-            // Use dtach for session persistence: -A creates new or attaches, -z disables suspend
-            terminalView.startProcess(
-                executable: dtach,
-                args: ["-A", sock, "-z", shell, "--login"],
-                environment: environment,
-                currentDirectory: startDirectory
-            )
-        } else {
-            // Fallback: direct shell (no persistence)
-            terminalView.startProcess(executable: shell, args: ["--login"], environment: environment, currentDirectory: startDirectory)
-        }
     }
 
     // Reattach to existing session
@@ -189,19 +256,47 @@ class Session: NSObject {
         self.name = name
         self.currentDirectory = currentDirectory
         self.socketPath = socketPath
-        self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        self.shell = ""
+        self.environment = environment
+        self.isReattach = true
+        self.terminalView = LocalProcessTerminalView(frame: .zero)  // Size will be set by constraints
         self.terminalView.autoresizingMask = [.width, .height]
         self.terminalView.nativeBackgroundColor = Session.terminalBackground
 
         super.init()
+    }
 
-        if let dtach = SessionManager.shared.dtachPath {
-            // Reattach to existing socket
-            terminalView.startProcess(
-                executable: dtach,
-                args: ["-a", socketPath, "-z"],
-                environment: environment
-            )
+    // Start the process after the view is properly laid out
+    func startProcessIfNeeded() {
+        guard !processStarted else { return }
+        processStarted = true
+
+        let manager = SessionManager.shared
+
+        if isReattach {
+            if let dtach = manager.dtachPath, let sock = socketPath {
+                terminalView.startProcess(
+                    executable: dtach,
+                    args: ["-a", sock, "-z"],
+                    environment: environment
+                )
+            }
+        } else {
+            if let dtach = manager.dtachPath, let sock = socketPath {
+                terminalView.startProcess(
+                    executable: dtach,
+                    args: ["-A", sock, "-z", shell, "--login"],
+                    environment: environment,
+                    currentDirectory: currentDirectory
+                )
+            } else {
+                terminalView.startProcess(
+                    executable: shell,
+                    args: ["--login"],
+                    environment: environment,
+                    currentDirectory: currentDirectory
+                )
+            }
         }
     }
 }
@@ -710,6 +805,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
     var activeSession: Session?
     var sessionCounter = 1
 
+    // Splash screen
+    var splashWindow: SplashWindow?
+
     let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
     let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
     lazy var env: [String] = {
@@ -719,10 +817,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
     }()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Set dock icon
+        if let icon = loadAppIcon() {
+            NSApplication.shared.applicationIconImage = icon
+        }
+
+        // Show splash screen
+        splashWindow = SplashWindow()
+        splashWindow?.makeKeyAndOrderFront(nil)
+
+        // Setup UI in background (window hidden initially)
         setupUI()
-        // Defer session creation until after layout is complete
-        DispatchQueue.main.async {
-            self.restoreOrCreateSessions()
+        window.orderOut(nil)  // Hide main window during splash
+
+        // After 3 seconds, fade out splash and show main window
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.splashWindow?.fadeOut {
+                self?.splashWindow = nil
+                self?.window.makeKeyAndOrderFront(nil)
+                self?.restoreOrCreateSessions()
+            }
         }
     }
 
@@ -754,11 +868,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
         let panelBackground = NSColor(red: 0.078, green: 0.086, blue: 0.098, alpha: 1.0)  // #141622
 
         // Content wrapper - holds split view and overlay preview panel
-        contentWrapper = NSView(frame: NSRect(x: 0, y: 0, width: 1100, height: 600))
+        contentWrapper = NSView(frame: NSRect(x: 0, y: 0, width: 1400, height: 700))
         contentWrapper.autoresizingMask = [.width, .height]
 
         // Main split view
-        splitView = NSSplitView(frame: NSRect(x: 0, y: 0, width: 1100, height: 600))
+        splitView = NSSplitView(frame: NSRect(x: 0, y: 0, width: 1400, height: 700))
         splitView.translatesAutoresizingMaskIntoConstraints = false
         splitView.isVertical = true
         splitView.dividerStyle = .thin
@@ -892,11 +1006,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
         centerPane.translatesAutoresizingMaskIntoConstraints = false
         sessionsScrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Minimum widths - terminal needs at least ~640px for 80 columns
+        // Minimum widths - terminal needs at least ~800px for 100+ columns
         NSLayoutConstraint.activate([
             fileScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
-            centerPane.widthAnchor.constraint(greaterThanOrEqualToConstant: 640),
-            sessionsScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)
+            centerPane.widthAnchor.constraint(greaterThanOrEqualToConstant: 800),
+            sessionsScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 100)
         ])
 
         // Set holding priorities to prevent collapse
@@ -957,9 +1071,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
             previewScrollView.trailingAnchor.constraint(equalTo: previewPanel.trailingAnchor)
         ])
 
-        // Window
+        // Window - sized for 120+ column terminal with side panels
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 1400, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -967,9 +1081,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
         window.title = "Shebang"
         window.contentView = contentWrapper
         window.delegate = self
-        window.minSize = NSSize(width: 960, height: 400)  // Ensure terminal has room for 80+ columns
+        window.minSize = NSSize(width: 1100, height: 500)  // Ensure terminal has room for 100+ columns
         window.center()
-        window.makeKeyAndOrderFront(nil)
+        // Note: window.makeKeyAndOrderFront called after splash screen
 
         // Keyboard shortcuts
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -1085,7 +1199,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
         }
     }
 
-    let terminalPadding: CGFloat = 8
+    let terminalPadding: CGFloat = 4  // Minimal padding to maximize terminal space
 
     func switchToSession(_ session: Session) {
         // Remove current terminal from container
@@ -1103,6 +1217,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
             session.terminalView.leadingAnchor.constraint(equalTo: terminalContainer.leadingAnchor, constant: terminalPadding),
             session.terminalView.trailingAnchor.constraint(equalTo: terminalContainer.trailingAnchor, constant: -terminalPadding)
         ])
+
+        // Force layout to ensure terminal has correct size
+        terminalContainer.layoutSubtreeIfNeeded()
+
+        // Start process AFTER layout so PTY gets correct size
+        session.startProcessIfNeeded()
 
         // Update file tree
         dataSource.loadDirectory(URL(fileURLWithPath: session.currentDirectory))
@@ -1261,7 +1381,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutli
 
     // MARK: - LocalProcessTerminalViewDelegate
 
-    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
+    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {
+        // Terminal size changed - this is just for logging/debugging
+        // SwiftTerm handles PTY resize automatically
+        print("Terminal size: \(newCols)x\(newRows)")
+    }
 
     func setTerminalTitle(source: LocalProcessTerminalView, title: String) {
         // Update session name if it's the active session

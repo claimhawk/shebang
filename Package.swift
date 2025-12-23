@@ -13,7 +13,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "ShebangApp",
-            dependencies: ["SwiftTerm"]
+            dependencies: ["SwiftTerm"],
+            resources: [
+                .copy("Resources")
+            ]
         )
     ]
 )
