@@ -195,7 +195,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         var env = Terminal.getEnvironmentVariables(termName: "xterm-256color")
         env.append("TERM_PROGRAM=Apple_Terminal")
 
-        terminalView.process.startProcess(executable: shell, args: ["--login"], environment: env, currentDirectory: homeDir)
+        terminalView.startProcess(executable: shell, args: ["--login"], environment: env, currentDirectory: homeDir)
 
         // Set delegate for OSC 7 directory updates
         terminalView.processDelegate = self
