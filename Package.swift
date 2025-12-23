@@ -8,7 +8,7 @@ let package = Package(
         .executable(name: "ShebangApp", targets: ["ShebangApp"])
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.2.0")
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", branch: "main")
     ],
     targets: [
         .executableTarget(
