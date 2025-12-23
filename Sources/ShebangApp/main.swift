@@ -4,8 +4,8 @@ import SwiftTerm
 // MARK: - FileItem Model
 
 class FileItem: NSObject {
-    let url: URL
-    let name: String
+    var url: URL
+    var name: String
     let isDirectory: Bool
     private var _children: [FileItem]?
     private var childrenLoaded = false
@@ -25,6 +25,11 @@ class FileItem: NSObject {
             loadChildren()
         }
         return _children
+    }
+
+    func invalidateChildren() {
+        childrenLoaded = false
+        _children = nil
     }
 
     private func loadChildren() {
@@ -52,12 +57,27 @@ class FileItem: NSObject {
 
 // MARK: - FileTreeDataSource
 
-class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate, NSTextFieldDelegate {
     var rootItems: [FileItem] = []
+    var rootURL: URL?
+    weak var outlineView: NSOutlineView?
+
+    // For inline editing
+    var editingItem: FileItem?
+    var isCreatingNew = false
+    var creatingDirectory = false
+    var pendingNewItemParent: FileItem?
 
     func loadDirectory(_ url: URL) {
+        rootURL = url
         let root = FileItem(url: url)
         rootItems = root.children ?? []
+    }
+
+    func refresh() {
+        guard let url = rootURL else { return }
+        loadDirectory(url)
+        outlineView?.reloadData()
     }
 
     // MARK: NSOutlineViewDataSource
@@ -103,6 +123,11 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
             let textField = NSTextField(labelWithString: "")
             textField.translatesAutoresizingMaskIntoConstraints = false
             textField.lineBreakMode = .byTruncatingTail
+            textField.isEditable = true
+            textField.isBordered = false
+            textField.backgroundColor = .clear
+            textField.focusRingType = .none
+            textField.delegate = self
             cellView?.addSubview(textField)
             cellView?.textField = textField
 
@@ -122,15 +147,219 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
 
         return cellView
     }
+
+    // MARK: NSTextFieldDelegate - Inline Editing
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let textField = obj.object as? NSTextField else { return }
+        let newName = textField.stringValue.trimmingCharacters(in: .whitespaces)
+
+        if newName.isEmpty {
+            // Cancelled or empty - restore original name or remove temp item
+            refresh()
+            editingItem = nil
+            isCreatingNew = false
+            return
+        }
+
+        if isCreatingNew {
+            createNewItem(name: newName)
+        } else if let item = editingItem {
+            renameItem(item, to: newName)
+        }
+
+        editingItem = nil
+        isCreatingNew = false
+    }
+
+    // MARK: File Operations
+
+    func createNewItem(name: String) {
+        guard let rootURL = rootURL else { return }
+
+        let parentURL: URL
+        if let parent = pendingNewItemParent {
+            parentURL = parent.url
+        } else {
+            parentURL = rootURL
+        }
+
+        let newURL = parentURL.appendingPathComponent(name)
+
+        do {
+            if creatingDirectory {
+                try FileManager.default.createDirectory(at: newURL, withIntermediateDirectories: false)
+            } else {
+                FileManager.default.createFile(atPath: newURL.path, contents: nil)
+            }
+
+            // Invalidate parent's children cache
+            pendingNewItemParent?.invalidateChildren()
+            refresh()
+        } catch {
+            showError("Failed to create \(creatingDirectory ? "folder" : "file"): \(error.localizedDescription)")
+        }
+
+        pendingNewItemParent = nil
+        creatingDirectory = false
+    }
+
+    func renameItem(_ item: FileItem, to newName: String) {
+        let newURL = item.url.deletingLastPathComponent().appendingPathComponent(newName)
+
+        do {
+            try FileManager.default.moveItem(at: item.url, to: newURL)
+            item.url = newURL
+            item.name = newName
+            refresh()
+        } catch {
+            showError("Failed to rename: \(error.localizedDescription)")
+            refresh()
+        }
+    }
+
+    func deleteItem(_ item: FileItem) {
+        // Show confirmation dialog
+        let alert = NSAlert()
+        alert.messageText = "Delete \"\(item.name)\"?"
+        alert.informativeText = item.isDirectory
+            ? "This folder and all its contents will be moved to the Trash."
+            : "This file will be moved to the Trash."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Move to Trash")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            do {
+                try FileManager.default.trashItem(at: item.url, resultingItemURL: nil)
+                refresh()
+            } catch {
+                showError("Failed to delete: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func showError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Error"
+        alert.informativeText = message
+        alert.alertStyle = .critical
+        alert.runModal()
+    }
+
+    // MARK: Start Editing
+
+    func startRename(item: FileItem) {
+        editingItem = item
+        isCreatingNew = false
+
+        guard let outlineView = outlineView else { return }
+        let row = outlineView.row(forItem: item)
+        guard row >= 0,
+              let cellView = outlineView.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
+              let textField = cellView.textField else { return }
+
+        textField.isEditable = true
+        textField.selectText(nil)
+        outlineView.window?.makeFirstResponder(textField)
+    }
+
+    func startCreate(isDirectory: Bool, parent: FileItem?) {
+        guard let outlineView = outlineView, let rootURL = rootURL else { return }
+
+        isCreatingNew = true
+        creatingDirectory = isDirectory
+        pendingNewItemParent = parent
+
+        // Expand parent if needed
+        if let parent = parent {
+            outlineView.expandItem(parent)
+        }
+
+        // Create temporary item for inline editing
+        let parentURL = parent?.url ?? rootURL
+        let tempName = isDirectory ? "New Folder" : "New File"
+        let tempURL = parentURL.appendingPathComponent(tempName)
+
+        // Create the file/folder immediately so it shows in the tree
+        do {
+            if isDirectory {
+                try FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: false)
+            } else {
+                FileManager.default.createFile(atPath: tempURL.path, contents: nil)
+            }
+        } catch {
+            showError("Failed to create: \(error.localizedDescription)")
+            isCreatingNew = false
+            return
+        }
+
+        // Refresh and start editing
+        parent?.invalidateChildren()
+        refresh()
+
+        // Find the new item and start editing
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            // Find the newly created item
+            let items = parent?.children ?? self.rootItems
+            if let newItem = items.first(where: { $0.name == tempName }) {
+                self.editingItem = newItem
+                self.startRename(item: newItem)
+            }
+        }
+    }
+}
+
+// MARK: - Custom OutlineView for keyboard handling
+
+class FileTreeOutlineView: NSOutlineView {
+    weak var fileDelegate: FileTreeDelegate?
+
+    override func keyDown(with event: NSEvent) {
+        guard let fileDelegate = fileDelegate else {
+            super.keyDown(with: event)
+            return
+        }
+
+        let key = event.keyCode
+
+        switch key {
+        case 51, 117: // Delete or Forward Delete
+            fileDelegate.deleteSelectedItem()
+        case 36: // Return - rename
+            fileDelegate.renameSelectedItem()
+        default:
+            super.keyDown(with: event)
+        }
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let point = convert(event.locationInWindow, from: nil)
+        let row = self.row(at: point)
+
+        if row >= 0 {
+            selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        }
+
+        return fileDelegate?.contextMenu(for: row)
+    }
+}
+
+protocol FileTreeDelegate: AnyObject {
+    func deleteSelectedItem()
+    func renameSelectedItem()
+    func contextMenu(for row: Int) -> NSMenu?
 }
 
 // MARK: - AppDelegate
 
-class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate {
     var window: NSWindow!
     var terminalView: LocalProcessTerminalView!
     var splitView: NSSplitView!
-    var outlineView: NSOutlineView!
+    var outlineView: FileTreeOutlineView!
     var dataSource: FileTreeDataSource!
     var currentCwd: String = ""
 
@@ -147,18 +376,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
 
-        outlineView = NSOutlineView()
+        outlineView = FileTreeOutlineView()
+        outlineView.fileDelegate = self
         outlineView.headerView = nil
         outlineView.rowHeight = 20
         outlineView.indentationPerLevel = 16
         outlineView.autoresizesOutlineColumn = true
 
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("FileColumn"))
-        column.isEditable = false
+        column.isEditable = true
         outlineView.addTableColumn(column)
         outlineView.outlineTableColumn = column
 
         dataSource = FileTreeDataSource()
+        dataSource.outlineView = outlineView
         dataSource.loadDirectory(URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
         outlineView.dataSource = dataSource
         outlineView.delegate = dataSource
@@ -231,6 +462,74 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
+    }
+
+    // MARK: - FileTreeDelegate
+
+    func deleteSelectedItem() {
+        let row = outlineView.selectedRow
+        guard row >= 0, let item = outlineView.item(atRow: row) as? FileItem else { return }
+        dataSource.deleteItem(item)
+    }
+
+    func renameSelectedItem() {
+        let row = outlineView.selectedRow
+        guard row >= 0, let item = outlineView.item(atRow: row) as? FileItem else { return }
+        dataSource.startRename(item: item)
+    }
+
+    func contextMenu(for row: Int) -> NSMenu? {
+        let menu = NSMenu()
+
+        let selectedItem = row >= 0 ? outlineView.item(atRow: row) as? FileItem : nil
+
+        // New File
+        let newFileItem = NSMenuItem(title: "New File", action: #selector(newFile(_:)), keyEquivalent: "")
+        newFileItem.target = self
+        newFileItem.representedObject = selectedItem
+        menu.addItem(newFileItem)
+
+        // New Folder
+        let newFolderItem = NSMenuItem(title: "New Folder", action: #selector(newFolder(_:)), keyEquivalent: "")
+        newFolderItem.target = self
+        newFolderItem.representedObject = selectedItem
+        menu.addItem(newFolderItem)
+
+        if selectedItem != nil {
+            menu.addItem(NSMenuItem.separator())
+
+            // Rename
+            let renameItem = NSMenuItem(title: "Rename", action: #selector(renameMenuItem(_:)), keyEquivalent: "")
+            renameItem.target = self
+            menu.addItem(renameItem)
+
+            // Delete
+            let deleteItem = NSMenuItem(title: "Move to Trash", action: #selector(deleteMenuItem(_:)), keyEquivalent: "")
+            deleteItem.target = self
+            menu.addItem(deleteItem)
+        }
+
+        return menu
+    }
+
+    @objc func newFile(_ sender: NSMenuItem) {
+        let parent = sender.representedObject as? FileItem
+        let actualParent = parent?.isDirectory == true ? parent : nil
+        dataSource.startCreate(isDirectory: false, parent: actualParent)
+    }
+
+    @objc func newFolder(_ sender: NSMenuItem) {
+        let parent = sender.representedObject as? FileItem
+        let actualParent = parent?.isDirectory == true ? parent : nil
+        dataSource.startCreate(isDirectory: true, parent: actualParent)
+    }
+
+    @objc func renameMenuItem(_ sender: NSMenuItem) {
+        renameSelectedItem()
+    }
+
+    @objc func deleteMenuItem(_ sender: NSMenuItem) {
+        deleteSelectedItem()
     }
 
     // MARK: - LocalProcessTerminalViewDelegate
