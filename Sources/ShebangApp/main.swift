@@ -132,7 +132,7 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
 
             let textField = NSTextField(labelWithString: "")
             textField.translatesAutoresizingMaskIntoConstraints = false
-            textField.lineBreakMode = .byTruncatingTail
+            textField.lineBreakMode = .byClipping
             textField.isEditable = true
             textField.isBordered = false
             textField.backgroundColor = .clear
@@ -419,7 +419,7 @@ protocol SessionsTableDelegate: AnyObject {
 
 // MARK: - AppDelegate
 
-class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate, SessionsDelegate, SessionsTableDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate, SessionsDelegate, SessionsTableDelegate {
     var window: NSWindow!
     var splitView: NSSplitView!
     var terminalContainer: NSView!
@@ -453,6 +453,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         splitView.isVertical = true
         splitView.dividerStyle = .thin
         splitView.autoresizingMask = [.width, .height]
+        splitView.delegate = self
 
         // Left pane - File tree
         let fileScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 200, height: 600))
@@ -468,8 +469,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
         let fileColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("FileColumn"))
         fileColumn.isEditable = true
+        fileColumn.resizingMask = .autoresizingMask
+        fileColumn.width = 200
         outlineView.addTableColumn(fileColumn)
         outlineView.outlineTableColumn = fileColumn
+        outlineView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
 
         dataSource = FileTreeDataSource()
         dataSource.outlineView = outlineView
@@ -495,7 +499,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
         let sessionColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("SessionColumn"))
         sessionColumn.isEditable = false
+        sessionColumn.resizingMask = .autoresizingMask
+        sessionColumn.width = 150
         sessionsTableView.addTableColumn(sessionColumn)
+        sessionsTableView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
 
         sessionsDataSource = SessionsDataSource()
         sessionsDataSource.tableView = sessionsTableView
@@ -619,6 +626,47 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
         // Focus terminal
         window.makeFirstResponder(session.terminalView)
+    }
+
+    // MARK: - NSSplitViewDelegate
+
+    func splitView(_ splitView: NSSplitView, constrainMinCoordinate proposedMinimumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
+        if dividerIndex == 0 {
+            return 100  // Min width for file tree
+        } else {
+            return splitView.subviews[0].frame.width + 300  // Min terminal width
+        }
+    }
+
+    func splitView(_ splitView: NSSplitView, constrainMaxCoordinate proposedMaximumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
+        let totalWidth = splitView.frame.width
+        if dividerIndex == 0 {
+            return totalWidth - 420  // Leave room for terminal + sessions
+        } else {
+            return totalWidth - 100  // Min width for sessions panel
+        }
+    }
+
+    func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
+        guard splitView.subviews.count == 3 else {
+            splitView.adjustSubviews()
+            return
+        }
+
+        let dividerThickness = splitView.dividerThickness
+        let totalWidth = splitView.frame.width
+        let totalHeight = splitView.frame.height
+
+        // Get current widths of side panels (keep them fixed)
+        let leftWidth = splitView.subviews[0].frame.width
+        let rightWidth = splitView.subviews[2].frame.width
+
+        // Terminal gets remaining space
+        let centerWidth = totalWidth - leftWidth - rightWidth - (2 * dividerThickness)
+
+        splitView.subviews[0].frame = NSRect(x: 0, y: 0, width: leftWidth, height: totalHeight)
+        splitView.subviews[1].frame = NSRect(x: leftWidth + dividerThickness, y: 0, width: centerWidth, height: totalHeight)
+        splitView.subviews[2].frame = NSRect(x: totalWidth - rightWidth, y: 0, width: rightWidth, height: totalHeight)
     }
 
     // MARK: - SessionsDelegate
