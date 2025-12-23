@@ -54,23 +54,150 @@ class FileItem: NSObject {
     }
 }
 
+// MARK: - Session Metadata
+
+struct SessionMetadata: Codable {
+    var name: String
+    var currentDirectory: String
+}
+
+// MARK: - Session Manager
+
+class SessionManager {
+    static let shared = SessionManager()
+
+    let sessionsDirectory: URL
+    let dtachPath: String?
+
+    private init() {
+        // Create sessions directory
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        sessionsDirectory = homeDir.appendingPathComponent(".shebang/sessions")
+        try? FileManager.default.createDirectory(at: sessionsDirectory, withIntermediateDirectories: true)
+
+        // Find dtach binary
+        let searchPaths = ["/opt/homebrew/bin/dtach", "/usr/local/bin/dtach", "/usr/bin/dtach"]
+        dtachPath = searchPaths.first { FileManager.default.fileExists(atPath: $0) }
+    }
+
+    func socketPath(for id: UUID) -> String {
+        sessionsDirectory.appendingPathComponent("\(id.uuidString).sock").path
+    }
+
+    func metadataPath(for id: UUID) -> URL {
+        sessionsDirectory.appendingPathComponent("\(id.uuidString).json")
+    }
+
+    func saveMetadata(for id: UUID, name: String, currentDirectory: String) {
+        let metadata = SessionMetadata(name: name, currentDirectory: currentDirectory)
+        if let data = try? JSONEncoder().encode(metadata) {
+            try? data.write(to: metadataPath(for: id))
+        }
+    }
+
+    func loadMetadata(for id: UUID) -> SessionMetadata? {
+        guard let data = try? Data(contentsOf: metadataPath(for: id)),
+              let metadata = try? JSONDecoder().decode(SessionMetadata.self, from: data) else {
+            return nil
+        }
+        return metadata
+    }
+
+    func existingSockets() -> [(id: UUID, path: String, metadata: SessionMetadata?)] {
+        guard let contents = try? FileManager.default.contentsOfDirectory(at: sessionsDirectory, includingPropertiesForKeys: nil) else {
+            return []
+        }
+
+        return contents.compactMap { url -> (UUID, String, SessionMetadata?)? in
+            guard url.pathExtension == "sock",
+                  let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent) else {
+                return nil
+            }
+            // Check if socket is still valid (dtach process running)
+            var statInfo = stat()
+            guard stat(url.path, &statInfo) == 0, (statInfo.st_mode & S_IFMT) == S_IFSOCK else {
+                // Clean up stale socket and metadata
+                try? FileManager.default.removeItem(at: url)
+                try? FileManager.default.removeItem(at: metadataPath(for: id))
+                return nil
+            }
+            return (id, url.path, loadMetadata(for: id))
+        }
+    }
+
+    func cleanupSocket(for id: UUID) {
+        let path = socketPath(for: id)
+        try? FileManager.default.removeItem(atPath: path)
+        try? FileManager.default.removeItem(at: metadataPath(for: id))
+    }
+}
+
 // MARK: - Session Model
 
 class Session: NSObject {
     let id: UUID
-    var name: String
+    var name: String {
+        didSet { saveMetadata() }
+    }
     let terminalView: LocalProcessTerminalView
-    var currentDirectory: String
+    var currentDirectory: String {
+        didSet { saveMetadata() }
+    }
+    let socketPath: String?
 
+    func saveMetadata() {
+        SessionManager.shared.saveMetadata(for: id, name: name, currentDirectory: currentDirectory)
+    }
+
+    // Create new session
     init(name: String, shell: String, environment: [String], startDirectory: String) {
         self.id = UUID()
         self.name = name
         self.currentDirectory = startDirectory
         self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         self.terminalView.autoresizingMask = [.width, .height]
+
+        let manager = SessionManager.shared
+        self.socketPath = manager.dtachPath != nil ? manager.socketPath(for: id) : nil
+
         super.init()
 
-        terminalView.startProcess(executable: shell, args: ["--login"], environment: environment, currentDirectory: startDirectory)
+        // Save initial metadata
+        saveMetadata()
+
+        if let dtach = manager.dtachPath, let sock = socketPath {
+            // Use dtach for session persistence: -A creates new or attaches, -z disables suspend
+            terminalView.startProcess(
+                executable: dtach,
+                args: ["-A", sock, "-z", shell, "--login"],
+                environment: environment,
+                currentDirectory: startDirectory
+            )
+        } else {
+            // Fallback: direct shell (no persistence)
+            terminalView.startProcess(executable: shell, args: ["--login"], environment: environment, currentDirectory: startDirectory)
+        }
+    }
+
+    // Reattach to existing session
+    init(id: UUID, name: String, currentDirectory: String, socketPath: String, environment: [String]) {
+        self.id = id
+        self.name = name
+        self.currentDirectory = currentDirectory
+        self.socketPath = socketPath
+        self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        self.terminalView.autoresizingMask = [.width, .height]
+
+        super.init()
+
+        if let dtach = SessionManager.shared.dtachPath {
+            // Reattach to existing socket
+            terminalView.startProcess(
+                executable: dtach,
+                args: ["-a", socketPath, "-z"],
+                environment: environment
+            )
+        }
     }
 }
 
@@ -296,10 +423,11 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
 
 // MARK: - Sessions TableView DataSource/Delegate
 
-class SessionsDataSource: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+class SessionsDataSource: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
     var sessions: [Session] = []
     weak var tableView: NSTableView?
     weak var delegate: SessionsDelegate?
+    var editingSession: Session?
 
     func tableView(_ tableView: NSTableView, numberOfRowsInSection section: Int) -> Int {
         return sessions.count
@@ -321,8 +449,13 @@ class SessionsDataSource: NSObject, NSTableViewDataSource, NSTableViewDelegate {
 
             let textField = NSTextField(labelWithString: "")
             textField.translatesAutoresizingMaskIntoConstraints = false
-            textField.lineBreakMode = .byTruncatingTail
+            textField.lineBreakMode = .byClipping
             textField.font = NSFont.systemFont(ofSize: 12)
+            textField.isEditable = true
+            textField.isBordered = false
+            textField.backgroundColor = .clear
+            textField.focusRingType = .none
+            textField.delegate = self
             cellView?.addSubview(textField)
             cellView?.textField = textField
 
@@ -343,6 +476,39 @@ class SessionsDataSource: NSObject, NSTableViewDataSource, NSTableViewDelegate {
         if row >= 0 && row < sessions.count {
             delegate?.didSelectSession(sessions[row])
         }
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let textField = obj.object as? NSTextField,
+              let tableView = tableView else { return }
+
+        // Find which session was edited by looking up the row
+        let row = tableView.row(for: textField)
+        guard row >= 0 && row < sessions.count else {
+            editingSession = nil
+            return
+        }
+
+        let session = sessions[row]
+        let newName = textField.stringValue.trimmingCharacters(in: .whitespaces)
+        if !newName.isEmpty && newName != session.name {
+            session.name = newName
+        }
+        tableView.reloadData()
+        editingSession = nil
+    }
+
+    func startRename(session: Session) {
+        editingSession = session
+        guard let tableView = tableView,
+              let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
+
+        let cellView = tableView.view(atColumn: 0, row: index, makeIfNecessary: false) as? NSTableCellView
+        guard let textField = cellView?.textField else { return }
+
+        textField.isEditable = true
+        textField.selectText(nil)
+        tableView.window?.makeFirstResponder(textField)
     }
 
     func addSession(_ session: Session) {
@@ -405,6 +571,13 @@ protocol FileTreeDelegate: AnyObject {
 class SessionsTableView: NSTableView {
     weak var sessionsDelegate: SessionsTableDelegate?
 
+    override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 36: sessionsDelegate?.renameSelectedSession()  // Enter
+        default: super.keyDown(with: event)
+        }
+    }
+
     override func menu(for event: NSEvent) -> NSMenu? {
         let point = convert(event.locationInWindow, from: nil)
         let row = self.row(at: point)
@@ -415,6 +588,7 @@ class SessionsTableView: NSTableView {
 
 protocol SessionsTableDelegate: AnyObject {
     func sessionsContextMenu(for row: Int) -> NSMenu?
+    func renameSelectedSession()
 }
 
 // MARK: - AppDelegate
@@ -443,7 +617,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         setupUI()
         // Defer session creation until after layout is complete
         DispatchQueue.main.async {
-            self.createNewSession()
+            self.restoreOrCreateSessions()
+        }
+    }
+
+    func restoreOrCreateSessions() {
+        let existingSockets = SessionManager.shared.existingSockets()
+
+        if existingSockets.isEmpty {
+            // No existing sessions, create a new one
+            createNewSession()
+        } else {
+            // Restore existing sessions
+            for (index, (id, path, metadata)) in existingSockets.enumerated() {
+                let name = metadata?.name ?? "Session \(index + 1)"
+                let cwd = metadata?.currentDirectory ?? homeDir
+                let session = Session(id: id, name: name, currentDirectory: cwd, socketPath: path, environment: env)
+                session.terminalView.processDelegate = self
+                sessionsDataSource.addSession(session)
+                sessionCounter = max(sessionCounter, index + 2)
+            }
+            // Switch to first session
+            if let first = sessionsDataSource.sessions.first {
+                switchToSession(first)
+            }
         }
     }
 
@@ -549,16 +746,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
 
+            // Check if first responder is a text field (editing mode)
+            let firstResponder = self.window.firstResponder
+            let isEditingText = firstResponder is NSTextView || firstResponder is NSTextField
+
             if event.modifierFlags.contains(.command) {
                 switch event.charactersIgnoringModifiers {
-                case "c":
-                    self.activeSession?.terminalView.copy(self)
-                    return nil
-                case "v":
-                    self.activeSession?.terminalView.paste(self)
-                    return nil
-                case "a":
-                    self.activeSession?.terminalView.selectAll(self)
+                case "c", "v", "a":
+                    // Let text fields handle copy/paste/select-all
+                    if isEditingText { return event }
+                    if event.charactersIgnoringModifiers == "c" {
+                        self.activeSession?.terminalView.copy(self)
+                    } else if event.charactersIgnoringModifiers == "v" {
+                        self.activeSession?.terminalView.paste(self)
+                    } else {
+                        self.activeSession?.terminalView.selectAll(self)
+                    }
                     return nil
                 case "t":
                     self.createNewSession()
@@ -592,6 +795,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
 
         let session = sessionsDataSource.sessions[row]
         session.terminalView.removeFromSuperview()
+        session.terminalView.terminate()
+
+        // Clean up socket file (kills the dtach session)
+        SessionManager.shared.cleanupSocket(for: session.id)
 
         sessionsDataSource.removeSession(at: row)
 
@@ -685,12 +892,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         menu.addItem(newItem)
 
         if row >= 0 {
+            let renameItem = NSMenuItem(title: "Rename", action: #selector(renameSessionMenuItem(_:)), keyEquivalent: "")
+            renameItem.target = self
+            menu.addItem(renameItem)
+
             let closeItem = NSMenuItem(title: "Close Session", action: #selector(closeSessionMenuItem(_:)), keyEquivalent: "")
             closeItem.target = self
             menu.addItem(closeItem)
         }
 
         return menu
+    }
+
+    func renameSelectedSession() {
+        guard let session = sessionsDataSource.selectedSession() else { return }
+        sessionsDataSource.startRename(session: session)
+    }
+
+    @objc func renameSessionMenuItem(_ sender: NSMenuItem) {
+        renameSelectedSession()
     }
 
     @objc func newSessionMenuItem(_ sender: NSMenuItem) {
@@ -798,6 +1018,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         // Find and close the session whose process terminated
         for (index, session) in sessionsDataSource.sessions.enumerated() {
             if session.terminalView === source {
+                // Clean up socket file
+                SessionManager.shared.cleanupSocket(for: session.id)
+
                 sessionsDataSource.removeSession(at: index)
 
                 if sessionsDataSource.sessions.isEmpty {
