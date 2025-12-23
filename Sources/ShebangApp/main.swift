@@ -149,6 +149,9 @@ class Session: NSObject {
         SessionManager.shared.saveMetadata(for: id, name: name, currentDirectory: currentDirectory)
     }
 
+    // Dark charcoal background color
+    static let terminalBackground = NSColor(red: 0.102, green: 0.114, blue: 0.129, alpha: 1.0)  // #1a1d21
+
     // Create new session
     init(name: String, shell: String, environment: [String], startDirectory: String) {
         self.id = UUID()
@@ -156,6 +159,7 @@ class Session: NSObject {
         self.currentDirectory = startDirectory
         self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         self.terminalView.autoresizingMask = [.width, .height]
+        self.terminalView.nativeBackgroundColor = Session.terminalBackground
 
         let manager = SessionManager.shared
         self.socketPath = manager.dtachPath != nil ? manager.socketPath(for: id) : nil
@@ -187,6 +191,7 @@ class Session: NSObject {
         self.socketPath = socketPath
         self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         self.terminalView.autoresizingMask = [.width, .height]
+        self.terminalView.nativeBackgroundColor = Session.terminalBackground
 
         super.init()
 
@@ -201,17 +206,82 @@ class Session: NSObject {
     }
 }
 
+// MARK: - Terminal Drop View
+
+class TerminalDropView: NSView {
+    weak var terminalView: LocalProcessTerminalView?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard sender.draggingPasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else {
+            return []
+        }
+        return .copy
+    }
+
+    override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        return true
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] else {
+            return false
+        }
+
+        // Build space-separated, shell-escaped paths
+        let paths = urls.map { shellEscapePath($0.path) }.joined(separator: " ")
+
+        // Send to terminal
+        terminalView?.send(txt: paths)
+        return true
+    }
+
+    private func shellEscapePath(_ path: String) -> String {
+        // If path contains special characters, wrap in single quotes
+        // and escape any existing single quotes
+        let needsQuoting = path.contains(" ") || path.contains("'") || path.contains("\"") ||
+                          path.contains("(") || path.contains(")") || path.contains("&") ||
+                          path.contains(";") || path.contains("|") || path.contains("<") ||
+                          path.contains(">") || path.contains("$") || path.contains("`") ||
+                          path.contains("\\") || path.contains("!")
+
+        if needsQuoting {
+            // Escape single quotes: replace ' with '\''
+            let escaped = path.replacingOccurrences(of: "'", with: "'\\''")
+            return "'\(escaped)'"
+        }
+        return path
+    }
+}
+
 // MARK: - FileTreeDataSource
 
 class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate, NSTextFieldDelegate {
     var rootItems: [FileItem] = []
     var rootURL: URL?
     weak var outlineView: NSOutlineView?
+    weak var fileDelegate: FileTreeDelegate?
 
     var editingItem: FileItem?
     var isCreatingNew = false
     var creatingDirectory = false
     var pendingNewItemParent: FileItem?
+
+    // MARK: - Drag Source
+
+    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+        guard let fileItem = item as? FileItem else { return nil }
+        return fileItem.url as NSURL
+    }
 
     func loadDirectory(_ url: URL) {
         rootURL = url
@@ -282,6 +352,16 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         cellView?.textField?.stringValue = fileItem.name
         cellView?.imageView?.image = NSWorkspace.shared.icon(forFile: fileItem.url.path)
         return cellView
+    }
+
+    func outlineViewSelectionDidChange(_ notification: Notification) {
+        guard let outlineView = notification.object as? NSOutlineView else { return }
+        let row = outlineView.selectedRow
+        if row >= 0, let item = outlineView.item(atRow: row) as? FileItem {
+            fileDelegate?.previewFile(item)
+        } else {
+            fileDelegate?.previewFile(nil)
+        }
     }
 
     func controlTextDidEndEditing(_ obj: Notification) {
@@ -564,6 +644,7 @@ protocol FileTreeDelegate: AnyObject {
     func deleteSelectedItem()
     func renameSelectedItem()
     func contextMenu(for row: Int) -> NSMenu?
+    func previewFile(_ item: FileItem?)
 }
 
 // MARK: - Custom Sessions TableView
@@ -593,14 +674,38 @@ protocol SessionsTableDelegate: AnyObject {
 
 // MARK: - AppDelegate
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate, SessionsDelegate, SessionsTableDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, NSOutlineViewDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate, SessionsDelegate, SessionsTableDelegate, NSWindowDelegate {
     var window: NSWindow!
     var splitView: NSSplitView!
-    var terminalContainer: NSView!
+    var terminalContainer: TerminalDropView!
     var outlineView: FileTreeOutlineView!
     var sessionsTableView: SessionsTableView!
     var dataSource: FileTreeDataSource!
     var sessionsDataSource: SessionsDataSource!
+
+    // Scroll views for border highlighting
+    var fileScrollView: NSScrollView!
+    var sessionsScrollView: NSScrollView!
+
+    // Terminal toolbar
+    var terminalToolbar: NSView!
+    var toolbarButtons: [NSButton] = []
+    let toolbarHeight: CGFloat = 36
+
+    // Center pane (holds toolbar + terminal)
+    var centerPane: NSView!
+
+    // Content wrapper (holds split view + overlay preview)
+    var contentWrapper: NSView!
+
+
+    // Preview panel (overlays terminal)
+    var previewPanel: NSView!
+    var previewScrollView: NSScrollView!
+    var previewTextView: NSTextView!
+    var previewWidthConstraint: NSLayoutConstraint!
+    var isPreviewVisible = false
+    let previewWidth: CGFloat = 350
 
     var activeSession: Session?
     var sessionCounter = 1
@@ -645,17 +750,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
     }
 
     func setupUI() {
+        // Panel background color (darker than terminal)
+        let panelBackground = NSColor(red: 0.078, green: 0.086, blue: 0.098, alpha: 1.0)  // #141622
+
+        // Content wrapper - holds split view and overlay preview panel
+        contentWrapper = NSView(frame: NSRect(x: 0, y: 0, width: 1100, height: 600))
+        contentWrapper.autoresizingMask = [.width, .height]
+
         // Main split view
         splitView = NSSplitView(frame: NSRect(x: 0, y: 0, width: 1100, height: 600))
+        splitView.translatesAutoresizingMaskIntoConstraints = false
         splitView.isVertical = true
         splitView.dividerStyle = .thin
-        splitView.autoresizingMask = [.width, .height]
         splitView.delegate = self
 
         // Left pane - File tree
-        let fileScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 200, height: 600))
+        fileScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 200, height: 600))
         fileScrollView.hasVerticalScroller = true
         fileScrollView.autohidesScrollers = true
+        fileScrollView.backgroundColor = panelBackground
+        fileScrollView.wantsLayer = true
 
         outlineView = FileTreeOutlineView()
         outlineView.fileDelegate = self
@@ -663,6 +777,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         outlineView.rowHeight = 20
         outlineView.indentationPerLevel = 16
         outlineView.autoresizesOutlineColumn = true
+        outlineView.backgroundColor = panelBackground
+        outlineView.setDraggingSourceOperationMask(.copy, forLocal: false)  // Enable dragging to other views
 
         let fileColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("FileColumn"))
         fileColumn.isEditable = true
@@ -674,18 +790,73 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
 
         dataSource = FileTreeDataSource()
         dataSource.outlineView = outlineView
+        dataSource.fileDelegate = self
         dataSource.loadDirectory(URL(fileURLWithPath: homeDir))
         outlineView.dataSource = dataSource
         outlineView.delegate = dataSource
 
         fileScrollView.documentView = outlineView
 
-        // Center pane - Terminal container
-        terminalContainer = NSView(frame: NSRect(x: 0, y: 0, width: 700, height: 600))
-        terminalContainer.autoresizingMask = [.width, .height]
+        // Center pane - wrapper holding toolbar + terminal
+        centerPane = NSView(frame: NSRect(x: 0, y: 0, width: 700, height: 600))
+        centerPane.wantsLayer = true
+        centerPane.layer?.backgroundColor = Session.terminalBackground.cgColor
+
+        // Toolbar above terminal
+        terminalToolbar = NSView()
+        terminalToolbar.translatesAutoresizingMaskIntoConstraints = false
+        terminalToolbar.wantsLayer = true
+        terminalToolbar.layer?.backgroundColor = panelBackground.cgColor
+
+        // Add empty square buttons to toolbar
+        let buttonSize: CGFloat = 24
+        let buttonSpacing: CGFloat = 8
+        for i in 0..<5 {
+            let button = NSButton(frame: .zero)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.bezelStyle = .smallSquare
+            button.title = ""
+            button.isBordered = true
+            button.wantsLayer = true
+            button.layer?.backgroundColor = NSColor(white: 0.15, alpha: 1.0).cgColor
+            button.layer?.cornerRadius = 4
+            button.tag = i
+            button.target = self
+            button.action = #selector(toolbarButtonClicked(_:))
+            terminalToolbar.addSubview(button)
+            toolbarButtons.append(button)
+
+            NSLayoutConstraint.activate([
+                button.widthAnchor.constraint(equalToConstant: buttonSize),
+                button.heightAnchor.constraint(equalToConstant: buttonSize),
+                button.centerYAnchor.constraint(equalTo: terminalToolbar.centerYAnchor),
+                button.leadingAnchor.constraint(equalTo: terminalToolbar.leadingAnchor, constant: CGFloat(i) * (buttonSize + buttonSpacing) + buttonSpacing)
+            ])
+        }
+
+        // Terminal container (below toolbar) - accepts file drops
+        terminalContainer = TerminalDropView()
+        terminalContainer.translatesAutoresizingMaskIntoConstraints = false
+        terminalContainer.wantsLayer = true
+        terminalContainer.layer?.backgroundColor = Session.terminalBackground.cgColor
+
+        centerPane.addSubview(terminalToolbar)
+        centerPane.addSubview(terminalContainer)
+
+        NSLayoutConstraint.activate([
+            terminalToolbar.topAnchor.constraint(equalTo: centerPane.topAnchor),
+            terminalToolbar.leadingAnchor.constraint(equalTo: centerPane.leadingAnchor),
+            terminalToolbar.trailingAnchor.constraint(equalTo: centerPane.trailingAnchor),
+            terminalToolbar.heightAnchor.constraint(equalToConstant: toolbarHeight),
+
+            terminalContainer.topAnchor.constraint(equalTo: terminalToolbar.bottomAnchor),
+            terminalContainer.leadingAnchor.constraint(equalTo: centerPane.leadingAnchor),
+            terminalContainer.trailingAnchor.constraint(equalTo: centerPane.trailingAnchor),
+            terminalContainer.bottomAnchor.constraint(equalTo: centerPane.bottomAnchor)
+        ])
 
         // Right pane - Sessions list
-        let sessionsScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 150, height: 600))
+        sessionsScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 150, height: 600))
         sessionsScrollView.hasVerticalScroller = true
         sessionsScrollView.autohidesScrollers = true
 
@@ -693,6 +864,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         sessionsTableView.sessionsDelegate = self
         sessionsTableView.headerView = nil
         sessionsTableView.rowHeight = 28
+        sessionsTableView.backgroundColor = panelBackground
+        sessionsScrollView.backgroundColor = panelBackground
 
         let sessionColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("SessionColumn"))
         sessionColumn.isEditable = false
@@ -711,17 +884,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
 
         // Add panes to split view
         splitView.addArrangedSubview(fileScrollView)
-        splitView.addArrangedSubview(terminalContainer)
+        splitView.addArrangedSubview(centerPane)
         splitView.addArrangedSubview(sessionsScrollView)
 
         // Set minimum widths using Auto Layout constraints
         fileScrollView.translatesAutoresizingMaskIntoConstraints = false
-        terminalContainer.translatesAutoresizingMaskIntoConstraints = false
+        centerPane.translatesAutoresizingMaskIntoConstraints = false
         sessionsScrollView.translatesAutoresizingMaskIntoConstraints = false
 
+        // Minimum widths - terminal needs at least ~640px for 80 columns
         NSLayoutConstraint.activate([
             fileScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
-            terminalContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 400),
+            centerPane.widthAnchor.constraint(greaterThanOrEqualToConstant: 640),
             sessionsScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)
         ])
 
@@ -729,6 +903,59 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         splitView.setHoldingPriority(.defaultLow, forSubviewAt: 0)
         splitView.setHoldingPriority(.defaultHigh, forSubviewAt: 1)
         splitView.setHoldingPriority(.defaultLow, forSubviewAt: 2)
+
+        // Add split view to wrapper
+        contentWrapper.addSubview(splitView)
+
+        // Split view fills wrapper
+        NSLayoutConstraint.activate([
+            splitView.topAnchor.constraint(equalTo: contentWrapper.topAnchor),
+            splitView.bottomAnchor.constraint(equalTo: contentWrapper.bottomAnchor),
+            splitView.leadingAnchor.constraint(equalTo: contentWrapper.leadingAnchor),
+            splitView.trailingAnchor.constraint(equalTo: contentWrapper.trailingAnchor)
+        ])
+
+        // Preview panel - overlays on top of terminal, expands rightward from file tree edge
+        previewPanel = NSView()
+        previewPanel.translatesAutoresizingMaskIntoConstraints = false
+        previewPanel.wantsLayer = true
+        previewPanel.layer?.backgroundColor = panelBackground.cgColor
+        previewPanel.isHidden = true
+
+        previewTextView = NSTextView()
+        previewTextView.isEditable = false
+        previewTextView.isSelectable = true
+        previewTextView.backgroundColor = panelBackground
+        previewTextView.textColor = NSColor(white: 0.85, alpha: 1.0)
+        previewTextView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        previewTextView.textContainerInset = NSSize(width: 12, height: 12)
+        previewTextView.autoresizingMask = [.width, .height]
+
+        previewScrollView = NSScrollView()
+        previewScrollView.translatesAutoresizingMaskIntoConstraints = false
+        previewScrollView.hasVerticalScroller = true
+        previewScrollView.hasHorizontalScroller = true
+        previewScrollView.autohidesScrollers = true
+        previewScrollView.backgroundColor = panelBackground
+        previewScrollView.documentView = previewTextView
+
+        previewPanel.addSubview(previewScrollView)
+        contentWrapper.addSubview(previewPanel)
+
+        // Preview panel: left edge anchored to file tree's right edge, width animates 0 -> terminal width
+        previewWidthConstraint = previewPanel.widthAnchor.constraint(equalToConstant: 0)
+
+        NSLayoutConstraint.activate([
+            previewPanel.topAnchor.constraint(equalTo: contentWrapper.topAnchor),
+            previewPanel.bottomAnchor.constraint(equalTo: contentWrapper.bottomAnchor),
+            previewPanel.leadingAnchor.constraint(equalTo: fileScrollView.trailingAnchor),
+            previewWidthConstraint!,
+
+            previewScrollView.topAnchor.constraint(equalTo: previewPanel.topAnchor),
+            previewScrollView.bottomAnchor.constraint(equalTo: previewPanel.bottomAnchor),
+            previewScrollView.leadingAnchor.constraint(equalTo: previewPanel.leadingAnchor),
+            previewScrollView.trailingAnchor.constraint(equalTo: previewPanel.trailingAnchor)
+        ])
 
         // Window
         window = NSWindow(
@@ -738,7 +965,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
             defer: false
         )
         window.title = "Shebang"
-        window.contentView = splitView
+        window.contentView = contentWrapper
+        window.delegate = self
+        window.minSize = NSSize(width: 960, height: 400)  // Ensure terminal has room for 80+ columns
         window.center()
         window.makeKeyAndOrderFront(nil)
 
@@ -780,6 +1009,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         }
     }
 
+    func previewFile(_ item: FileItem?) {
+        guard let item = item, !item.isDirectory else {
+            hidePreview()
+            return
+        }
+
+        // Try to read file content
+        guard let content = try? String(contentsOf: item.url, encoding: .utf8) else {
+            hidePreview()
+            return
+        }
+
+        previewTextView.string = content
+        showPreview()
+    }
+
+    func showPreview() {
+        guard !isPreviewVisible else { return }
+        isPreviewVisible = true
+        previewPanel.isHidden = false
+
+        // Expand to match terminal width
+        let targetWidth = terminalContainer.frame.width
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.25
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            previewWidthConstraint.animator().constant = targetWidth
+        }
+    }
+
+    func hidePreview() {
+        guard isPreviewVisible else { return }
+        isPreviewVisible = false
+
+        // Collapse back to 0 width
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            previewWidthConstraint.animator().constant = 0
+        }, completionHandler: {
+            self.previewPanel.isHidden = true
+        })
+    }
+
     func createNewSession() {
         let session = Session(name: "Session \(sessionCounter)", shell: shell, environment: env, startDirectory: homeDir)
         session.terminalView.processDelegate = self
@@ -811,20 +1085,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
         }
     }
 
+    let terminalPadding: CGFloat = 8
+
     func switchToSession(_ session: Session) {
         // Remove current terminal from container
         activeSession?.terminalView.removeFromSuperview()
 
-        // Add new terminal with Auto Layout constraints
+        // Add new terminal with Auto Layout constraints and padding
         activeSession = session
+        terminalContainer.terminalView = session.terminalView  // Wire up drop target
         session.terminalView.translatesAutoresizingMaskIntoConstraints = false
         terminalContainer.addSubview(session.terminalView)
 
         NSLayoutConstraint.activate([
-            session.terminalView.topAnchor.constraint(equalTo: terminalContainer.topAnchor),
-            session.terminalView.bottomAnchor.constraint(equalTo: terminalContainer.bottomAnchor),
-            session.terminalView.leadingAnchor.constraint(equalTo: terminalContainer.leadingAnchor),
-            session.terminalView.trailingAnchor.constraint(equalTo: terminalContainer.trailingAnchor)
+            session.terminalView.topAnchor.constraint(equalTo: terminalContainer.topAnchor, constant: terminalPadding),
+            session.terminalView.bottomAnchor.constraint(equalTo: terminalContainer.bottomAnchor, constant: -terminalPadding),
+            session.terminalView.leadingAnchor.constraint(equalTo: terminalContainer.leadingAnchor, constant: terminalPadding),
+            session.terminalView.trailingAnchor.constraint(equalTo: terminalContainer.trailingAnchor, constant: -terminalPadding)
         ])
 
         // Update file tree
@@ -977,6 +1254,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
     @objc func renameMenuItem(_ sender: NSMenuItem) { renameSelectedItem() }
     @objc func deleteMenuItem(_ sender: NSMenuItem) { deleteSelectedItem() }
 
+    @objc func toolbarButtonClicked(_ sender: NSButton) {
+        // Placeholder - buttons will be defined later
+        print("Toolbar button \(sender.tag) clicked")
+    }
+
     // MARK: - LocalProcessTerminalViewDelegate
 
     func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
@@ -1036,6 +1318,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, LocalPr
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    // MARK: - NSWindowDelegate (Focus Tracking)
+
+    func windowDidUpdate(_ notification: Notification) {
+        checkPreviewFocus()
+    }
+
+    private var wasFileTreeFocused = false
+
+    func checkPreviewFocus() {
+        guard let firstResponder = window.firstResponder else { return }
+
+        // Check if focus is in file tree area (including preview panel)
+        let isFileTreeFocused = isViewInHierarchy(firstResponder, targetView: outlineView) ||
+                                isViewInHierarchy(firstResponder, targetView: fileScrollView) ||
+                                isViewInHierarchy(firstResponder, targetView: previewPanel)
+
+        // Hide preview if focus left file tree
+        if wasFileTreeFocused && !isFileTreeFocused && isPreviewVisible {
+            hidePreview()
+        }
+
+        wasFileTreeFocused = isFileTreeFocused
+    }
+
+    private func isViewInHierarchy(_ responder: NSResponder, targetView: NSView) -> Bool {
+        var current: NSResponder? = responder
+        while current != nil {
+            if let view = current as? NSView {
+                if view === targetView { return true }
+                var ancestor: NSView? = view.superview
+                while ancestor != nil {
+                    if ancestor === targetView { return true }
+                    ancestor = ancestor?.superview
+                }
+            }
+            current = current?.nextResponder
+        }
+        return false
+    }
 }
 
 let app = NSApplication.shared
