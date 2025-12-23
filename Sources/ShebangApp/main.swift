@@ -43,7 +43,6 @@ class FileItem: NSObject {
             return
         }
 
-        // Sort: directories first, then alphabetical
         _children = contents
             .map { FileItem(url: $0) }
             .sorted { lhs, rhs in
@@ -55,6 +54,26 @@ class FileItem: NSObject {
     }
 }
 
+// MARK: - Session Model
+
+class Session: NSObject {
+    let id: UUID
+    var name: String
+    let terminalView: LocalProcessTerminalView
+    var currentDirectory: String
+
+    init(name: String, shell: String, environment: [String], startDirectory: String) {
+        self.id = UUID()
+        self.name = name
+        self.currentDirectory = startDirectory
+        self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        self.terminalView.autoresizingMask = [.width, .height]
+        super.init()
+
+        terminalView.startProcess(executable: shell, args: ["--login"], environment: environment, currentDirectory: startDirectory)
+    }
+}
+
 // MARK: - FileTreeDataSource
 
 class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate, NSTextFieldDelegate {
@@ -62,7 +81,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
     var rootURL: URL?
     weak var outlineView: NSOutlineView?
 
-    // For inline editing
     var editingItem: FileItem?
     var isCreatingNew = false
     var creatingDirectory = false
@@ -80,20 +98,14 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         outlineView?.reloadData()
     }
 
-    // MARK: NSOutlineViewDataSource
-
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-        if item == nil {
-            return rootItems.count
-        }
+        if item == nil { return rootItems.count }
         guard let fileItem = item as? FileItem else { return 0 }
         return fileItem.children?.count ?? 0
     }
 
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-        if item == nil {
-            return rootItems[index]
-        }
+        if item == nil { return rootItems[index] }
         guard let fileItem = item as? FileItem else { return NSNull() }
         return fileItem.children?[index] ?? NSNull()
     }
@@ -102,8 +114,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         guard let fileItem = item as? FileItem else { return false }
         return fileItem.isDirectory
     }
-
-    // MARK: NSOutlineViewDelegate
 
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         guard let fileItem = item as? FileItem else { return nil }
@@ -144,18 +154,14 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
 
         cellView?.textField?.stringValue = fileItem.name
         cellView?.imageView?.image = NSWorkspace.shared.icon(forFile: fileItem.url.path)
-
         return cellView
     }
-
-    // MARK: NSTextFieldDelegate - Inline Editing
 
     func controlTextDidEndEditing(_ obj: Notification) {
         guard let textField = obj.object as? NSTextField else { return }
         let newName = textField.stringValue.trimmingCharacters(in: .whitespaces)
 
         if newName.isEmpty {
-            // Cancelled or empty - restore original name or remove temp item
             refresh()
             editingItem = nil
             isCreatingNew = false
@@ -172,18 +178,9 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         isCreatingNew = false
     }
 
-    // MARK: File Operations
-
     func createNewItem(name: String) {
         guard let rootURL = rootURL else { return }
-
-        let parentURL: URL
-        if let parent = pendingNewItemParent {
-            parentURL = parent.url
-        } else {
-            parentURL = rootURL
-        }
-
+        let parentURL = pendingNewItemParent?.url ?? rootURL
         let newURL = parentURL.appendingPathComponent(name)
 
         do {
@@ -192,8 +189,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
             } else {
                 FileManager.default.createFile(atPath: newURL.path, contents: nil)
             }
-
-            // Invalidate parent's children cache
             pendingNewItemParent?.invalidateChildren()
             refresh()
         } catch {
@@ -206,7 +201,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
 
     func renameItem(_ item: FileItem, to newName: String) {
         let newURL = item.url.deletingLastPathComponent().appendingPathComponent(newName)
-
         do {
             try FileManager.default.moveItem(at: item.url, to: newURL)
             item.url = newURL
@@ -219,7 +213,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
     }
 
     func deleteItem(_ item: FileItem) {
-        // Show confirmation dialog
         let alert = NSAlert()
         alert.messageText = "Delete \"\(item.name)\"?"
         alert.informativeText = item.isDirectory
@@ -247,8 +240,6 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         alert.runModal()
     }
 
-    // MARK: Start Editing
-
     func startRename(item: FileItem) {
         editingItem = item
         isCreatingNew = false
@@ -271,17 +262,12 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
         creatingDirectory = isDirectory
         pendingNewItemParent = parent
 
-        // Expand parent if needed
-        if let parent = parent {
-            outlineView.expandItem(parent)
-        }
+        if let parent = parent { outlineView.expandItem(parent) }
 
-        // Create temporary item for inline editing
         let parentURL = parent?.url ?? rootURL
         let tempName = isDirectory ? "New Folder" : "New File"
         let tempURL = parentURL.appendingPathComponent(tempName)
 
-        // Create the file/folder immediately so it shows in the tree
         do {
             if isDirectory {
                 try FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: false)
@@ -294,15 +280,11 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
             return
         }
 
-        // Refresh and start editing
         parent?.invalidateChildren()
         refresh()
 
-        // Find the new item and start editing
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-
-            // Find the newly created item
             let items = parent?.children ?? self.rootItems
             if let newItem = items.first(where: { $0.name == tempName }) {
                 self.editingItem = newItem
@@ -312,7 +294,81 @@ class FileTreeDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelega
     }
 }
 
-// MARK: - Custom OutlineView for keyboard handling
+// MARK: - Sessions TableView DataSource/Delegate
+
+class SessionsDataSource: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+    var sessions: [Session] = []
+    weak var tableView: NSTableView?
+    weak var delegate: SessionsDelegate?
+
+    func tableView(_ tableView: NSTableView, numberOfRowsInSection section: Int) -> Int {
+        return sessions.count
+    }
+
+    func numberOfRows(in tableView: NSTableView) -> Int {
+        return sessions.count
+    }
+
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        let session = sessions[row]
+
+        let cellIdentifier = NSUserInterfaceItemIdentifier("SessionCell")
+        var cellView = tableView.makeView(withIdentifier: cellIdentifier, owner: self) as? NSTableCellView
+
+        if cellView == nil {
+            cellView = NSTableCellView()
+            cellView?.identifier = cellIdentifier
+
+            let textField = NSTextField(labelWithString: "")
+            textField.translatesAutoresizingMaskIntoConstraints = false
+            textField.lineBreakMode = .byTruncatingTail
+            textField.font = NSFont.systemFont(ofSize: 12)
+            cellView?.addSubview(textField)
+            cellView?.textField = textField
+
+            NSLayoutConstraint.activate([
+                textField.leadingAnchor.constraint(equalTo: cellView!.leadingAnchor, constant: 8),
+                textField.trailingAnchor.constraint(equalTo: cellView!.trailingAnchor, constant: -8),
+                textField.centerYAnchor.constraint(equalTo: cellView!.centerYAnchor)
+            ])
+        }
+
+        cellView?.textField?.stringValue = session.name
+        return cellView
+    }
+
+    func tableViewSelectionDidChange(_ notification: Notification) {
+        guard let tableView = notification.object as? NSTableView else { return }
+        let row = tableView.selectedRow
+        if row >= 0 && row < sessions.count {
+            delegate?.didSelectSession(sessions[row])
+        }
+    }
+
+    func addSession(_ session: Session) {
+        sessions.append(session)
+        tableView?.reloadData()
+        tableView?.selectRowIndexes(IndexSet(integer: sessions.count - 1), byExtendingSelection: false)
+    }
+
+    func removeSession(at index: Int) {
+        guard index >= 0 && index < sessions.count else { return }
+        sessions.remove(at: index)
+        tableView?.reloadData()
+    }
+
+    func selectedSession() -> Session? {
+        guard let tableView = tableView else { return nil }
+        let row = tableView.selectedRow
+        return row >= 0 && row < sessions.count ? sessions[row] : nil
+    }
+}
+
+protocol SessionsDelegate: AnyObject {
+    func didSelectSession(_ session: Session)
+}
+
+// MARK: - Custom OutlineView
 
 class FileTreeOutlineView: NSOutlineView {
     weak var fileDelegate: FileTreeDelegate?
@@ -323,26 +379,17 @@ class FileTreeOutlineView: NSOutlineView {
             return
         }
 
-        let key = event.keyCode
-
-        switch key {
-        case 51, 117: // Delete or Forward Delete
-            fileDelegate.deleteSelectedItem()
-        case 36: // Return - rename
-            fileDelegate.renameSelectedItem()
-        default:
-            super.keyDown(with: event)
+        switch event.keyCode {
+        case 51, 117: fileDelegate.deleteSelectedItem()
+        case 36: fileDelegate.renameSelectedItem()
+        default: super.keyDown(with: event)
         }
     }
 
     override func menu(for event: NSEvent) -> NSMenu? {
         let point = convert(event.locationInWindow, from: nil)
         let row = self.row(at: point)
-
-        if row >= 0 {
-            selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        }
-
+        if row >= 0 { selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false) }
         return fileDelegate?.contextMenu(for: row)
     }
 }
@@ -353,28 +400,64 @@ protocol FileTreeDelegate: AnyObject {
     func contextMenu(for row: Int) -> NSMenu?
 }
 
+// MARK: - Custom Sessions TableView
+
+class SessionsTableView: NSTableView {
+    weak var sessionsDelegate: SessionsTableDelegate?
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let point = convert(event.locationInWindow, from: nil)
+        let row = self.row(at: point)
+        if row >= 0 { selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false) }
+        return sessionsDelegate?.sessionsContextMenu(for: row)
+    }
+}
+
+protocol SessionsTableDelegate: AnyObject {
+    func sessionsContextMenu(for row: Int) -> NSMenu?
+}
+
 // MARK: - AppDelegate
 
-class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate, FileTreeDelegate, SessionsDelegate, SessionsTableDelegate {
     var window: NSWindow!
-    var terminalView: LocalProcessTerminalView!
     var splitView: NSSplitView!
+    var terminalContainer: NSView!
     var outlineView: FileTreeOutlineView!
+    var sessionsTableView: SessionsTableView!
     var dataSource: FileTreeDataSource!
-    var currentCwd: String = ""
+    var sessionsDataSource: SessionsDataSource!
+
+    var activeSession: Session?
+    var sessionCounter = 1
+
+    let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+    let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+    lazy var env: [String] = {
+        var e = Terminal.getEnvironmentVariables(termName: "xterm-256color")
+        e.append("TERM_PROGRAM=Apple_Terminal")
+        return e
+    }()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Create split view
-        splitView = NSSplitView(frame: NSRect(x: 0, y: 0, width: 1000, height: 600))
+        setupUI()
+        // Defer session creation until after layout is complete
+        DispatchQueue.main.async {
+            self.createNewSession()
+        }
+    }
+
+    func setupUI() {
+        // Main split view
+        splitView = NSSplitView(frame: NSRect(x: 0, y: 0, width: 1100, height: 600))
         splitView.isVertical = true
         splitView.dividerStyle = .thin
         splitView.autoresizingMask = [.width, .height]
 
-        // Create file tree (left pane)
-        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 200, height: 600))
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
+        // Left pane - File tree
+        let fileScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 200, height: 600))
+        fileScrollView.hasVerticalScroller = true
+        fileScrollView.autohidesScrollers = true
 
         outlineView = FileTreeOutlineView()
         outlineView.fileDelegate = self
@@ -383,31 +466,69 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         outlineView.indentationPerLevel = 16
         outlineView.autoresizesOutlineColumn = true
 
-        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("FileColumn"))
-        column.isEditable = true
-        outlineView.addTableColumn(column)
-        outlineView.outlineTableColumn = column
+        let fileColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("FileColumn"))
+        fileColumn.isEditable = true
+        outlineView.addTableColumn(fileColumn)
+        outlineView.outlineTableColumn = fileColumn
 
         dataSource = FileTreeDataSource()
         dataSource.outlineView = outlineView
-        dataSource.loadDirectory(URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+        dataSource.loadDirectory(URL(fileURLWithPath: homeDir))
         outlineView.dataSource = dataSource
         outlineView.delegate = dataSource
 
-        scrollView.documentView = outlineView
+        fileScrollView.documentView = outlineView
 
-        // Create terminal (right pane)
-        terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
-        terminalView.autoresizingMask = [.width, .height]
+        // Center pane - Terminal container
+        terminalContainer = NSView(frame: NSRect(x: 0, y: 0, width: 700, height: 600))
+        terminalContainer.autoresizingMask = [.width, .height]
 
-        // Add to split view
-        splitView.addArrangedSubview(scrollView)
-        splitView.addArrangedSubview(terminalView)
-        splitView.setPosition(200, ofDividerAt: 0)
+        // Right pane - Sessions list
+        let sessionsScrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 150, height: 600))
+        sessionsScrollView.hasVerticalScroller = true
+        sessionsScrollView.autohidesScrollers = true
 
-        // Create window
+        sessionsTableView = SessionsTableView()
+        sessionsTableView.sessionsDelegate = self
+        sessionsTableView.headerView = nil
+        sessionsTableView.rowHeight = 28
+
+        let sessionColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("SessionColumn"))
+        sessionColumn.isEditable = false
+        sessionsTableView.addTableColumn(sessionColumn)
+
+        sessionsDataSource = SessionsDataSource()
+        sessionsDataSource.tableView = sessionsTableView
+        sessionsDataSource.delegate = self
+        sessionsTableView.dataSource = sessionsDataSource
+        sessionsTableView.delegate = sessionsDataSource
+
+        sessionsScrollView.documentView = sessionsTableView
+
+        // Add panes to split view
+        splitView.addArrangedSubview(fileScrollView)
+        splitView.addArrangedSubview(terminalContainer)
+        splitView.addArrangedSubview(sessionsScrollView)
+
+        // Set minimum widths using Auto Layout constraints
+        fileScrollView.translatesAutoresizingMaskIntoConstraints = false
+        terminalContainer.translatesAutoresizingMaskIntoConstraints = false
+        sessionsScrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            fileScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
+            terminalContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 400),
+            sessionsScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)
+        ])
+
+        // Set holding priorities to prevent collapse
+        splitView.setHoldingPriority(.defaultLow, forSubviewAt: 0)
+        splitView.setHoldingPriority(.defaultHigh, forSubviewAt: 1)
+        splitView.setHoldingPriority(.defaultLow, forSubviewAt: 2)
+
+        // Window
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -416,38 +537,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         window.contentView = splitView
         window.center()
         window.makeKeyAndOrderFront(nil)
-        window.makeFirstResponder(terminalView)
 
-        // Start shell in home directory
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-
-        // Get default environment and add TERM_PROGRAM to enable OSC 7 in zsh
-        var env = Terminal.getEnvironmentVariables(termName: "xterm-256color")
-        env.append("TERM_PROGRAM=Apple_Terminal")
-
-        terminalView.startProcess(executable: shell, args: ["--login"], environment: env, currentDirectory: homeDir)
-
-        // Set delegate for OSC 7 directory updates
-        terminalView.processDelegate = self
-        currentCwd = homeDir
-        dataSource.loadDirectory(URL(fileURLWithPath: homeDir))
-        outlineView.reloadData()
-
-        // Global key monitor for Cmd+C/V
+        // Keyboard shortcuts
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
 
             if event.modifierFlags.contains(.command) {
                 switch event.charactersIgnoringModifiers {
                 case "c":
-                    self.terminalView.copy(self)
+                    self.activeSession?.terminalView.copy(self)
                     return nil
                 case "v":
-                    self.terminalView.paste(self)
+                    self.activeSession?.terminalView.paste(self)
                     return nil
                 case "a":
-                    self.terminalView.selectAll(self)
+                    self.activeSession?.terminalView.selectAll(self)
+                    return nil
+                case "t":
+                    self.createNewSession()
+                    return nil
+                case "w":
+                    self.closeCurrentSession()
                     return nil
                 case "q":
                     NSApplication.shared.terminate(self)
@@ -460,8 +570,87 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         }
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+    func createNewSession() {
+        let session = Session(name: "Session \(sessionCounter)", shell: shell, environment: env, startDirectory: homeDir)
+        session.terminalView.processDelegate = self
+        sessionCounter += 1
+        sessionsDataSource.addSession(session)
+        switchToSession(session)
+    }
+
+    func closeCurrentSession() {
+        guard let tableView = sessionsDataSource.tableView else { return }
+        let row = tableView.selectedRow
+        guard row >= 0 && row < sessionsDataSource.sessions.count else { return }
+
+        let session = sessionsDataSource.sessions[row]
+        session.terminalView.removeFromSuperview()
+
+        sessionsDataSource.removeSession(at: row)
+
+        if sessionsDataSource.sessions.isEmpty {
+            createNewSession()
+        } else {
+            let newRow = min(row, sessionsDataSource.sessions.count - 1)
+            tableView.selectRowIndexes(IndexSet(integer: newRow), byExtendingSelection: false)
+            switchToSession(sessionsDataSource.sessions[newRow])
+        }
+    }
+
+    func switchToSession(_ session: Session) {
+        // Remove current terminal from container
+        activeSession?.terminalView.removeFromSuperview()
+
+        // Add new terminal with Auto Layout constraints
+        activeSession = session
+        session.terminalView.translatesAutoresizingMaskIntoConstraints = false
+        terminalContainer.addSubview(session.terminalView)
+
+        NSLayoutConstraint.activate([
+            session.terminalView.topAnchor.constraint(equalTo: terminalContainer.topAnchor),
+            session.terminalView.bottomAnchor.constraint(equalTo: terminalContainer.bottomAnchor),
+            session.terminalView.leadingAnchor.constraint(equalTo: terminalContainer.leadingAnchor),
+            session.terminalView.trailingAnchor.constraint(equalTo: terminalContainer.trailingAnchor)
+        ])
+
+        // Update file tree
+        dataSource.loadDirectory(URL(fileURLWithPath: session.currentDirectory))
+        outlineView.reloadData()
+
+        // Focus terminal
+        window.makeFirstResponder(session.terminalView)
+    }
+
+    // MARK: - SessionsDelegate
+
+    func didSelectSession(_ session: Session) {
+        switchToSession(session)
+    }
+
+    // MARK: - SessionsTableDelegate
+
+    func sessionsContextMenu(for row: Int) -> NSMenu? {
+        let menu = NSMenu()
+
+        let newItem = NSMenuItem(title: "New Session", action: #selector(newSessionMenuItem(_:)), keyEquivalent: "")
+        newItem.target = self
+        menu.addItem(newItem)
+
+        if row >= 0 {
+            let closeItem = NSMenuItem(title: "Close Session", action: #selector(closeSessionMenuItem(_:)), keyEquivalent: "")
+            closeItem.target = self
+            menu.addItem(closeItem)
+        }
+
+        return menu
+    }
+
+    @objc func newSessionMenuItem(_ sender: NSMenuItem) {
+        createNewSession()
+    }
+
+    @objc func closeSessionMenuItem(_ sender: NSMenuItem) {
+        closeCurrentSession()
     }
 
     // MARK: - FileTreeDelegate
@@ -480,16 +669,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
     func contextMenu(for row: Int) -> NSMenu? {
         let menu = NSMenu()
-
         let selectedItem = row >= 0 ? outlineView.item(atRow: row) as? FileItem : nil
 
-        // New File
         let newFileItem = NSMenuItem(title: "New File", action: #selector(newFile(_:)), keyEquivalent: "")
         newFileItem.target = self
         newFileItem.representedObject = selectedItem
         menu.addItem(newFileItem)
 
-        // New Folder
         let newFolderItem = NSMenuItem(title: "New Folder", action: #selector(newFolder(_:)), keyEquivalent: "")
         newFolderItem.target = self
         newFolderItem.representedObject = selectedItem
@@ -498,12 +684,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
         if selectedItem != nil {
             menu.addItem(NSMenuItem.separator())
 
-            // Rename
             let renameItem = NSMenuItem(title: "Rename", action: #selector(renameMenuItem(_:)), keyEquivalent: "")
             renameItem.target = self
             menu.addItem(renameItem)
 
-            // Delete
             let deleteItem = NSMenuItem(title: "Move to Trash", action: #selector(deleteMenuItem(_:)), keyEquivalent: "")
             deleteItem.target = self
             menu.addItem(deleteItem)
@@ -514,61 +698,73 @@ class AppDelegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDele
 
     @objc func newFile(_ sender: NSMenuItem) {
         let parent = sender.representedObject as? FileItem
-        let actualParent = parent?.isDirectory == true ? parent : nil
-        dataSource.startCreate(isDirectory: false, parent: actualParent)
+        dataSource.startCreate(isDirectory: false, parent: parent?.isDirectory == true ? parent : nil)
     }
 
     @objc func newFolder(_ sender: NSMenuItem) {
         let parent = sender.representedObject as? FileItem
-        let actualParent = parent?.isDirectory == true ? parent : nil
-        dataSource.startCreate(isDirectory: true, parent: actualParent)
+        dataSource.startCreate(isDirectory: true, parent: parent?.isDirectory == true ? parent : nil)
     }
 
-    @objc func renameMenuItem(_ sender: NSMenuItem) {
-        renameSelectedItem()
-    }
-
-    @objc func deleteMenuItem(_ sender: NSMenuItem) {
-        deleteSelectedItem()
-    }
+    @objc func renameMenuItem(_ sender: NSMenuItem) { renameSelectedItem() }
+    @objc func deleteMenuItem(_ sender: NSMenuItem) { deleteSelectedItem() }
 
     // MARK: - LocalProcessTerminalViewDelegate
 
-    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {
-        // Terminal size changed - nothing to do
-    }
+    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
 
     func setTerminalTitle(source: LocalProcessTerminalView, title: String) {
-        window.title = title.isEmpty ? "Shebang" : title
+        // Update session name if it's the active session
+        if let session = activeSession, session.terminalView === source {
+            window.title = title.isEmpty ? "Shebang" : title
+        }
     }
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
         guard let dir = directory else { return }
 
-        // Parse file:// URL if present
         let path: String
         if dir.hasPrefix("file://") {
-            if let url = URL(string: dir) {
-                path = url.path
-            } else {
-                return
-            }
+            guard let url = URL(string: dir) else { return }
+            path = url.path
         } else {
             path = dir
         }
 
-        print("[OSC7] Directory changed to: \(path)")
+        // Find which session this belongs to and update its CWD
+        for session in sessionsDataSource.sessions {
+            if session.terminalView === source {
+                session.currentDirectory = path
 
-        if path != currentCwd {
-            currentCwd = path
-            dataSource.loadDirectory(URL(fileURLWithPath: path))
-            outlineView.reloadData()
+                // If it's the active session, update file tree
+                if session === activeSession {
+                    dataSource.loadDirectory(URL(fileURLWithPath: path))
+                    outlineView.reloadData()
+                }
+                break
+            }
         }
     }
 
     func processTerminated(source: TerminalView, exitCode: Int32?) {
-        print("[TERM] Process terminated with exit code: \(exitCode ?? -1)")
+        // Find and close the session whose process terminated
+        for (index, session) in sessionsDataSource.sessions.enumerated() {
+            if session.terminalView === source {
+                sessionsDataSource.removeSession(at: index)
+
+                if sessionsDataSource.sessions.isEmpty {
+                    createNewSession()
+                } else if session === activeSession {
+                    let newIndex = min(index, sessionsDataSource.sessions.count - 1)
+                    sessionsTableView.selectRowIndexes(IndexSet(integer: newIndex), byExtendingSelection: false)
+                    switchToSession(sessionsDataSource.sessions[newIndex])
+                }
+                break
+            }
+        }
     }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
 let app = NSApplication.shared
